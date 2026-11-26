@@ -1,0 +1,15 @@
+[package]
+name = "qs-proto"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "The Quassel core wire protocol: handshake, features and the signal proxy layer"
+
+[dependencies]
+qs-datastream.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true }

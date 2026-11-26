@@ -1,0 +1,9 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 3353c506c786b7f07f28d1c4443119d7ac5b571d6077433551f9982bf80c84b0 # shrinks to value = StringList([None])
+cc 5009a0bcbcf507beb80dce6d15f6ed45116c038a28fd425e92ad7ea25efe9668 # shrinks to values = [Variant(Bytes(None))]
+cc d463dcbb69f5d6e191045ddbe78fd299119190b2b1a2bfb53a3b43d414ab5342 # shrinks to value = List([Bytes(None)])

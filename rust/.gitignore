@@ -1,0 +1,7 @@
+# The build directory of the workspace.
+/target/
+
+# The build directory of the fuzz target.
+/crates/qs-datastream/fuzz/target/
+/crates/qs-datastream/fuzz/corpus/
+/crates/qs-datastream/fuzz/artifacts/

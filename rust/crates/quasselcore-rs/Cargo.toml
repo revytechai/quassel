@@ -1,0 +1,36 @@
+[package]
+name = "quasselcore-rs"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "The Quassel IRC core, in Rust"
+
+[lib]
+name = "quasselcore_rs"
+path = "src/lib.rs"
+
+[[bin]]
+name = "quasselcore-rs"
+path = "src/main.rs"
+
+[dependencies]
+qs-datastream.workspace = true
+qs-proto.workspace = true
+qs-storage.workspace = true
+qs-irc.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+clap.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "signal", "time", "fs", "io-util", "sync"] }
+rustls = { workspace = true }
+tokio-rustls = { workspace = true }
+rustls-pemfile = { workspace = true }
+sha2 = "0.10"
+hex = "0.4"
+libc = "0.2"
+
+[dev-dependencies]
+rcgen.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "time"] }

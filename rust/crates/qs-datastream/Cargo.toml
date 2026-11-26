@@ -1,0 +1,13 @@
+[package]
+name = "qs-datastream"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Qt QDataStream/QVariant wire codec as the Quassel core uses it (no I/O)"
+
+[dependencies]
+
+[dev-dependencies]
+proptest.workspace = true

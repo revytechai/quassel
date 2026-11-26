@@ -1,0 +1,23 @@
+[package]
+name = "qs-datastream-fuzz"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+# The fuzz target is its own workspace: cargo-fuzz drives it with its own
+# RUSTFLAGS and the sanitizer runtime.
+[workspace]
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+qs-datastream = { path = ".." }
+
+[[bin]]
+name = "datastream"
+path = "fuzz_targets/datastream.rs"
+test = false
+doc = false
+bench = false

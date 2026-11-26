@@ -1,0 +1,49 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/qs-datastream",
+    "crates/qs-proto",
+    "crates/qs-storage",
+    "crates/qs-irc",
+    "crates/quasselcore-rs",
+]
+# The fuzz target is a separate workspace: cargo-fuzz drives it with its own
+# RUSTFLAGS and a nightly-only sanitizer setup.
+exclude = ["crates/qs-datastream/fuzz"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.80"
+license = "GPL-2.0-or-later"
+repository = "https://github.com/revytechai/quassel"
+description = "Quassel IRC core, ported to Rust"
+
+[workspace.dependencies]
+qs-datastream = { path = "crates/qs-datastream", version = "0.1.0" }
+qs-proto = { path = "crates/qs-proto", version = "0.1.0" }
+qs-storage = { path = "crates/qs-storage", version = "0.1.0" }
+qs-irc = { path = "crates/qs-irc", version = "0.1.0" }
+
+anyhow = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["rt-multi-thread", "net", "io-util", "macros", "signal", "time", "sync"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12", "logging"] }
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12", "logging"] }
+rustls-pemfile = "2"
+rcgen = "0.14"
+clap = { version = "4", features = ["derive"] }
+sqlx = { version = "0.8", default-features = false, features = [
+    "runtime-tokio",
+    "sqlite",
+    "postgres",
+    "tls-rustls-ring",
+] }
+proptest = "1"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+strip = true

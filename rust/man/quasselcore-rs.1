@@ -1,0 +1,155 @@
+.\" quasselcore-rs.1 -- the Quassel core, in Rust
+.Dd November 26, 2026
+.Dt QUASSELCORE-RS 1
+.Os
+.Sh NAME
+.Nm quasselcore-rs
+.Nd the Quassel IRC core, in Rust
+.Sh SYNOPSIS
+.Nm
+.Op Fl -c Ar path
+.Op Fl -p Ar port
+.Op Fl -listen Ar address
+.Nm
+.Fl -add-user
+.Nm
+.Fl -change-userpass Ar username
+.Sh DESCRIPTION
+.Nm
+is the daemon of Quassel IRC.
+It holds the IRC connections and the chat history; the clients connect to it
+and talk the Quassel protocol to it.
+Because the state lives in the core, a client can be closed and opened again
+without losing anything, and several clients can watch the same conversation.
+.Pp
+The core speaks the same protocol as the C++ core, so the existing clients
+work with it, and it reads and writes the same databases.
+.Pp
+The options are listed in
+.Sx OPTIONS .
+The configuration file,
+.Pa quasselcore.conf ,
+is described in
+.Sx CONFIGURATION .
+.Sh OPTIONS
+.Bl -tag -width Ds
+.It Fl -c Ar path , Fl -configdir Ar path
+The directory that holds the configuration file, the database and the
+certificate.
+The default is
+.Pa $HOME/.config/quassel.org/quasselcore .
+.It Fl -listen Ar address
+The addresses the core listens on.
+Several addresses are separated by commas.
+The default is
+.Ql ::,0.0.0.0 ,
+which is every address of both families.
+.It Fl -p Ar port , Fl -port Ar port
+The port the core listens at.
+The default is 4242.
+.It Fl -n , Fl -norestore
+This option is reserved.
+The core does not restore the state of the last run yet, and it says so when
+the option is used.
+.It Fl -select-backend Ar name
+The storage backend to use for this run:
+.Cm SQLite
+or
+.Cm PostgreSQL .
+The data is not migrated: a database of the other backend is not touched.
+.It Fl -select-authenticator Ar id
+The authenticator to use.
+The only one there is at the moment is
+.Cm Database ;
+any other value is refused.
+.It Fl -add-user
+Add a user.
+The user name and the password are asked for on the terminal.
+.It Fl -change-userpass Ar username
+Change the password of a user.
+.It Fl -user Ar name
+The user name for
+.Fl -add-user .
+The user whose password is changed is the one of
+.Fl -change-userpass ;
+the two options cannot be used together.
+The name is not a secret.
+.It Fl -password-file Ar path
+Read the password from this file instead of asking for it.
+The file holds the password on its first line.
+The password is never taken from the command line, where any other process
+could read it out of the process list.
+.It Fl -require-tls , Fl -require-ssl
+Refuse the clients that do not use TLS.
+.It Fl -tls-cert Ar path , Fl -ssl-cert Ar path
+The certificate the core serves.
+The default is
+.Pa quasselCert.pem
+in the configuration directory.
+.It Fl -tls-key Ar path , Fl -ssl-key Ar path
+The private key of the certificate.
+The default is the certificate file itself.
+.It Fl -strict-ident
+This option is reserved.
+The core does not answer ident requests yet, and it refuses the option.
+.It Fl -L Ar level , Fl -loglevel Ar level
+The log level:
+.Cm Debug ,
+.Cm Info ,
+.Cm Warning
+or
+.Cm Error .
+The default is
+.Cm Info .
+.It Fl -l Ar path , Fl -logfile Ar path
+Log to this file as well as to the standard error.
+.It Fl -d , Fl -debug
+Log at the debug level.
+.El
+.Sh CONFIGURATION
+The core reads
+.Pa quasselcore.conf
+from its configuration directory.
+The file is in the INI format that Qt's
+.Ql QSettings
+writes; a key of a sub-group is written with a backslash.
+.Bd -literal -offset indent
+[Core]
+StorageSettings\eBackend=SQLite
+StorageSettings\eConnectionProperties\eDatabase=quassel-storage.sqlite
+AuthSettings\eAuthenticator=Database
+
+[Core\eSSL]
+Certificate=/var/db/quasselcore/quasselCert.pem
+Key=/var/db/quasselcore/quasselCert.pem
+SystemCA=true
+.Ed
+.Pp
+The storage backend is either
+.Cm SQLite ,
+a file in the configuration directory, or
+.Cm PostgreSQL ,
+whose connection properties are in the file under
+.Ql StorageSettings\eConnectionProperties .
+.Pp
+The certificate is one PEM file that holds the private key and the
+certificate, concatenated.
+.Sh FILES
+.Bl -tag -width Ds
+.It Pa quasselcore.conf
+The configuration of the core, in the configuration directory.
+.It Pa quassel-storage.sqlite
+The SQLite database, in the configuration directory.
+.It Pa quasselCert.pem
+The certificate and the private key, in the configuration directory.
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh SEE ALSO
+.Nm quassel ,
+the graphical client.
+.Sh AUTHORS
+.An The Quassel project ,
+and the authors of the Rust port.
+.Sh BUGS
+Report the bugs to the issue tracker of the repository.

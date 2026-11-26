@@ -1,0 +1,22 @@
+[package]
+name = "qs-irc"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "IRC networking for the Quassel core, over TLS with certificate fingerprint pinning"
+
+[dependencies]
+qs-datastream.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "time"] }
+rustls = { workspace = true }
+tokio-rustls = { workspace = true }
+rustls-pemfile = { workspace = true }
+rustls-native-certs = "0.8"
+sha2 = "0.10"
+
+[dev-dependencies]
+rcgen.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "time"] }

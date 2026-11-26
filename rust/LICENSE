@@ -1,0 +1,11 @@
+The Rust port of Quassel IRC is a derivative work of the C++ tree that
+stands next to it in this repository, and it is under the same licence: the
+GNU General Public License, version 2 or (at your option) any later version.
+
+The notice and the licence itself are in the files of the repository root:
+
+    ../COPYING      the notice
+    ../gpl-2.0.txt  the GNU General Public License, version 2
+    ../gpl-3.0.txt  the GNU General Public License, version 3
+
+Every source file of this port carries the notice in its header.
