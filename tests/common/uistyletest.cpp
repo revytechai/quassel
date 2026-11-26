@@ -31,6 +31,7 @@
 #include "testglobal.h"
 #include "uisettings.h"
 #include "uistyle.h"
+#include "icon.h"
 
 TEST(UiStyleTest, availableThemesList)
 {
@@ -251,4 +252,19 @@ TEST(UiStyleTest, itemFormatTypeBitwiseAndHash)
     uint hash1 = qHash(combined, 0);
     uint hash2 = qHash(assigned, 0);
     EXPECT_EQ(hash1, hash2);
+}
+
+TEST(UiStyleTest, iconResolutionWithFallback)
+{
+    test::QuasselTestSupport::ensureInitialized(Quassel::ClientOnly);
+
+    // Verify key IRC and action icons resolve to valid icons using bundled fallback
+    EXPECT_FALSE(icon::get("irc-channel-active").isNull());
+    EXPECT_FALSE(icon::get("irc-channel-inactive").isNull());
+    EXPECT_FALSE(icon::get("network-connect").isNull());
+    EXPECT_FALSE(icon::get("network-disconnect").isNull());
+    EXPECT_FALSE(icon::get("irc-operator").isNull());
+    EXPECT_FALSE(icon::get("irc-voice").isNull());
+    EXPECT_FALSE(icon::get({"im-user-offline", "user-offline"}).isNull());
+    EXPECT_FALSE(icon::get({"im-user-online", "im-user", "user-available"}).isNull());
 }

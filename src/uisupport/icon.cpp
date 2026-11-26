@@ -23,6 +23,7 @@
 #include <set>
 
 #include <QDebug>
+#include <QFileInfo>
 
 namespace icon {
 
@@ -36,6 +37,32 @@ void printWarning(const QString& iconName, const QString& extra = {})
     }
 }
 
+void ensureIconPathsAndFallback()
+{
+    static const bool initialized = []() {
+        QStringList paths = QIcon::themeSearchPaths();
+        paths.removeAll(QStringLiteral(":/icons"));
+
+        for (const QString& sysPath : {QStringLiteral("/usr/local/share/quassel/icons"),
+                                      QStringLiteral("/usr/share/quassel/icons"),
+                                      QStringLiteral("/usr/local/share/icons"),
+                                      QStringLiteral("/usr/share/icons")}) {
+            if (QFileInfo::exists(sysPath) && !paths.contains(sysPath)) {
+                paths << sysPath;
+            }
+        }
+        paths << QStringLiteral(":/icons");
+        QIcon::setThemeSearchPaths(paths);
+        QIcon::setFallbackSearchPaths(paths);
+
+        if (QIcon::fallbackThemeName().isEmpty()) {
+            QIcon::setFallbackThemeName(QStringLiteral("breeze-dark"));
+        }
+        return true;
+    }();
+    Q_UNUSED(initialized);
+}
+
 }  // namespace
 
 QIcon get(const QString& iconName, const QString& fallbackPath)
@@ -45,6 +72,8 @@ QIcon get(const QString& iconName, const QString& fallbackPath)
 
 QIcon get(const std::vector<QString>& iconNames, const QString& fallbackPath)
 {
+    ensureIconPathsAndFallback();
+
     for (auto&& iconName : iconNames) {
         // Exact match
         if (QIcon::hasThemeIcon(iconName)) {

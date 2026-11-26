@@ -290,6 +290,7 @@ void QtUi::setupIconTheme()
     }
     themePaths << ":/icons";
     QIcon::setThemeSearchPaths(themePaths);
+    QIcon::setFallbackSearchPaths(themePaths);
 
     refreshIconTheme();
 }
@@ -329,6 +330,22 @@ QString determineFallbackTheme(const QStringList& availableThemes, const QString
     return availableThemes.first();
 }
 
+QString determineBundledFallback(const QStringList& availableThemes)
+{
+    QString currentTheme = UiStyle::currentTheme();
+    bool isDark = (currentTheme == "dark" || currentTheme == "tokyonight" || currentTheme == "darkmonokai"
+                   || currentTheme == "darksolarized" || currentTheme == "classicdark");
+
+    QString bundledFallback = isDark ? QStringLiteral("breeze-dark") : QStringLiteral("breeze");
+    if (!availableThemes.contains(bundledFallback)) {
+        bundledFallback = isDark ? QStringLiteral("breeze") : QStringLiteral("breeze-dark");
+        if (!availableThemes.contains(bundledFallback) && !availableThemes.isEmpty()) {
+            bundledFallback = availableThemes.first();
+        }
+    }
+    return bundledFallback;
+}
+
 }  // namespace
 
 void QtUi::refreshIconTheme()
@@ -350,6 +367,9 @@ void QtUi::refreshIconTheme()
 
     UiStyleSettings s;
     QString fallbackTheme = determineFallbackTheme(availableThemes, _systemIconTheme);
+    QString bundledFallback = determineBundledFallback(availableThemes);
+    QIcon::setFallbackThemeName(bundledFallback);
+    QIcon::setFallbackSearchPaths(QIcon::themeSearchPaths());
 
     if (_systemIconTheme.isEmpty() || _systemIconTheme == fallbackTheme || s.value("Icons/OverrideSystemTheme", true).toBool()) {
         // We have a valid fallback theme and want to override the system theme (if it's even defined), so we're basically done
@@ -394,10 +414,10 @@ void QtUi::refreshIconTheme()
     // Write a dummy index file that is sufficient to make QIconLoader happy
     auto indexContents = QString{"[Icon Theme]\n"
                                  "Name=quassel-icon-proxy\n"
-                                 "Inherits=%1,%2\n"
+                                 "Inherits=%1,%2,%3,breeze-dark,breeze\n"
                                  "Directories=apps/32\n"
                                  "[apps/32]\nSize=32\nType=Fixed\n"}
-                             .arg(_systemIconTheme, fallbackTheme);
+                             .arg(_systemIconTheme, fallbackTheme, bundledFallback);
     if (indexFile.write(indexContents.toLatin1()) < 0) {
         qWarning() << "Could not write index file for proxying the system icon theme, using fallback";
         QIcon::setThemeName(fallbackTheme);
@@ -406,4 +426,5 @@ void QtUi::refreshIconTheme()
     }
     indexFile.close();
     QIcon::setThemeName("quassel-icon-proxy");
+    emit iconThemeRefreshed();
 }
