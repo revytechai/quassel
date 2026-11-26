@@ -349,6 +349,16 @@ QString AbstractSqlStorage::schemaVersionUpgradeStep()
 }
 
 
+QString AbstractSqlStorage::bindableCodec(const QByteArray& codec)
+{
+    // A null codec (a client that does not use custom encodings) converts to a null QString,
+    // which Qt's SQL drivers bind as SQL NULL.  The codec columns are NOT NULL, so bind an
+    // empty (but not null) string instead, which keeps the "no explicit codec" state.
+    QString name = QString(codec);
+    return name.isNull() ? QString("") : name;
+}
+
+
 bool AbstractSqlStorage::watchQuery(QSqlQuery& query)
 {
     bool queryError = query.lastError().isValid();

@@ -779,9 +779,9 @@ void PostgreSqlStorage::bindNetworkInfo(QSqlQuery& query, const NetworkInfo& inf
 {
     query.bindValue(":networkname", info.networkName);
     query.bindValue(":identityid", info.identity.isValid() ? info.identity.toInt() : QVariant());
-    query.bindValue(":encodingcodec", QString(info.codecForEncoding));
-    query.bindValue(":decodingcodec", QString(info.codecForDecoding));
-    query.bindValue(":servercodec", QString(info.codecForServer));
+    query.bindValue(":encodingcodec", bindableCodec(info.codecForEncoding));
+    query.bindValue(":decodingcodec", bindableCodec(info.codecForDecoding));
+    query.bindValue(":servercodec", bindableCodec(info.codecForServer));
     query.bindValue(":userandomserver", info.useRandomServer);
     query.bindValue(":perform", info.perform.join("\n"));
     query.bindValue(":useautoidentify", info.useAutoIdentify);

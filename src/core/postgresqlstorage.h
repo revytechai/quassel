@@ -175,8 +175,12 @@ protected:
     void rollbackSavePoint(const QString& handle, const QSqlDatabase& db) { db.exec(QString("ROLLBACK TO SAVEPOINT %1").arg(handle)); }
     void releaseSavePoint(const QString& handle, const QSqlDatabase& db) { db.exec(QString("RELEASE SAVEPOINT %1").arg(handle)); }
 
-private:
+protected:
+    // Binds the columns of the network table.  Protected so that the tests can check what the
+    // PostgreSQL backend binds, without a PostgreSQL server.
     void bindNetworkInfo(QSqlQuery& query, const NetworkInfo& info);
+
+private:
     void bindServerInfo(QSqlQuery& query, const Network::Server& server);
     QSqlQuery prepareAndExecuteQuery(const QString& queryname, const QString& paramstring, QSqlDatabase& db);
     QSqlQuery prepareAndExecuteQuery(const QString& queryname, QSqlDatabase& db)

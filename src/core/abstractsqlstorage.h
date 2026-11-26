@@ -109,6 +109,19 @@ protected:
 
     bool watchQuery(QSqlQuery& query);
 
+    /**
+     * Returns a codec name that can be bound to the (NOT NULL) codec columns
+     *
+     * A client that does not use custom encodings sends a null codec.  Converting that null
+     * QByteArray to a QString yields a null QString, which the Qt SQL drivers bind as SQL NULL,
+     * and the codec columns are declared NOT NULL.  Substituting an empty (but not null) string
+     * keeps the "no explicit codec" state, and stores it without violating the column constraint.
+     *
+     * @param[in] codec  The codec name as sent by the client; may be null
+     * @return The codec name, or an empty string if the given codec is null
+     */
+    static QString bindableCodec(const QByteArray& codec);
+
     int schemaVersion();
     virtual int installedSchemaVersion() { return -1; };
 

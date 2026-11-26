@@ -752,9 +752,9 @@ void SqliteStorage::bindNetworkInfo(QSqlQuery& query, const NetworkInfo& info)
 {
     query.bindValue(":networkname", info.networkName);
     query.bindValue(":identityid", info.identity.toInt());
-    query.bindValue(":encodingcodec", QString(info.codecForEncoding));
-    query.bindValue(":decodingcodec", QString(info.codecForDecoding));
-    query.bindValue(":servercodec", QString(info.codecForServer));
+    query.bindValue(":encodingcodec", bindableCodec(info.codecForEncoding));
+    query.bindValue(":decodingcodec", bindableCodec(info.codecForDecoding));
+    query.bindValue(":servercodec", bindableCodec(info.codecForServer));
     query.bindValue(":userandomserver", info.useRandomServer ? 1 : 0);
     query.bindValue(":perform", info.perform.join("\n"));
     query.bindValue(":useautoidentify", info.useAutoIdentify ? 1 : 0);
