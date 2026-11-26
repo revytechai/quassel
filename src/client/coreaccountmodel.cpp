@@ -51,6 +51,9 @@ void CoreAccountModel::load()
 {
     clear();
     CoreAccountSettings s;
+    if (s.knownAccounts().isEmpty()) {
+        s.checkAndMigrateFlatpakConfig();
+    }
     for (AccountId accId : s.knownAccounts()) {
         QVariantMap map = s.retrieveAccountData(accId);
         CoreAccount acc;

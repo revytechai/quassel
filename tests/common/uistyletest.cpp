@@ -24,6 +24,7 @@
 #include <QString>
 #include <QTextStream>
 
+#include "graphicalui.h"
 #include "integrationtestsupport.h"
 #include "qssparser.h"
 #include "quassel.h"
@@ -77,6 +78,24 @@ TEST(UiStyleTest, themeSwitching)
     UiStyle::setTheme(QStringLiteral("default"));
     EXPECT_EQ(UiStyle::currentTheme(), QStringLiteral("default"));
     EXPECT_FALSE(settings.value("UseCustomStyleSheet", false).toBool());
+}
+
+TEST(UiStyleTest, themeSwitchingNotifiesAndReloads)
+{
+    test::QuasselTestSupport::ensureInitialized(Quassel::ClientOnly);
+
+    UiStyle style;
+    int changedCount = 0;
+    QObject::connect(&style, &UiStyle::changed, [&changedCount]() {
+        changedCount++;
+    });
+
+    GraphicalUi::setUiStyle(&style);
+
+    UiStyle::setTheme(QStringLiteral("dark"));
+    EXPECT_GT(changedCount, 0);
+
+    GraphicalUi::setUiStyle(nullptr);
 }
 
 TEST(UiStyleTest, qssParserPaletteExtraction)
@@ -172,4 +191,64 @@ TEST(UiStyleTest, modernDarkStylesheetParsable)
         EXPECT_FALSE(parser.formats().isEmpty());
         EXPECT_FALSE(parser.listItemFormats().isEmpty());
     }
+}
+
+TEST(UiStyleTest, brushAndSetBrush)
+{
+    UiStyle style;
+    QBrush markerBrush(QColor("#f38ba8"));
+    style.setBrush(UiStyle::ColorRole::MarkerLine, markerBrush);
+    EXPECT_EQ(style.brush(UiStyle::ColorRole::MarkerLine).color(), QColor("#f38ba8"));
+
+    QBrush selfBrush(QColor("#89b4fa"));
+    style.setBrush(UiStyle::ColorRole::SenderColorSelf, selfBrush);
+    EXPECT_EQ(style.brush(UiStyle::ColorRole::SenderColorSelf).color(), QColor("#89b4fa"));
+}
+
+TEST(UiStyleTest, styleStringFormatting)
+{
+    UiStyle::StyledString res = UiStyle::styleString(QStringLiteral("Hello %BWorld%B!"), UiStyle::FormatType::PlainMsg);
+    EXPECT_EQ(res.plainText, QStringLiteral("Hello World!"));
+    EXPECT_GE(res.formatList.size(), 2u);
+
+    // Escaped percent test
+    UiStyle::StyledString esc = UiStyle::styleString(QStringLiteral("100%% guaranteed"), UiStyle::FormatType::PlainMsg);
+    EXPECT_EQ(esc.plainText, QStringLiteral("100% guaranteed"));
+
+    // mIRC color test (%Dcf04 specifies foreground color 04)
+    UiStyle::StyledString col = UiStyle::styleString(QStringLiteral("%Dcf04Red%Dc- text"), UiStyle::FormatType::PlainMsg);
+    EXPECT_EQ(col.plainText, QStringLiteral("Red text"));
+}
+
+TEST(UiStyleTest, formatGeneration)
+{
+    UiStyle style;
+    UiStyle::Format boldFormat{UiStyle::FormatType::Bold, {}, {}};
+    QTextCharFormat charFmt = style.format(boldFormat, UiStyle::MessageLabel::None);
+    EXPECT_EQ(charFmt.fontWeight(), static_cast<int>(QFont::Bold));
+
+    UiStyle::Format italicFormat{UiStyle::FormatType::Italic, {}, {}};
+    QTextCharFormat italicFmt = style.format(italicFormat, UiStyle::MessageLabel::None);
+    EXPECT_TRUE(italicFmt.fontItalic());
+
+    UiStyle::Format underlineFormat{UiStyle::FormatType::Underline, {}, {}};
+    QTextCharFormat underFmt = style.format(underlineFormat, UiStyle::MessageLabel::None);
+    EXPECT_TRUE(underFmt.fontUnderline());
+}
+
+TEST(UiStyleTest, itemFormatTypeBitwiseAndHash)
+{
+    UiStyle::ItemFormatType base = UiStyle::ItemFormatType::BufferViewItem;
+    UiStyle::ItemFormatType active = UiStyle::ItemFormatType::ActiveBuffer;
+
+    UiStyle::ItemFormatType combined = base | active;
+    EXPECT_NE(combined, UiStyle::ItemFormatType::None);
+
+    UiStyle::ItemFormatType assigned = base;
+    assigned |= active;
+    EXPECT_EQ(combined, assigned);
+
+    uint hash1 = qHash(combined, 0);
+    uint hash2 = qHash(assigned, 0);
+    EXPECT_EQ(hash1, hash2);
 }

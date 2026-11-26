@@ -22,6 +22,12 @@ quassel_add_test(UiStyleTest
         Quassel::Test::Util
 )
 
+quassel_add_test(CoreAccountTest
+    LIBRARIES
+        Quassel::Client
+        Quassel::Test::Util
+)
+
 quassel_add_test(TypesTest)
 
 quassel_add_test(UtilTest)

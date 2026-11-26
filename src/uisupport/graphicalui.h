@@ -62,6 +62,7 @@ public:
     inline static ContextMenuActionProvider* contextMenuActionProvider();
     inline static ToolBarActionProvider* toolBarActionProvider();
     inline static UiStyle* uiStyle();
+    static void setUiStyle(UiStyle*);
     inline static QWidget* mainWidget();
 
     //! Force the main widget to the front and focus it (may not work in all window systems)
@@ -103,7 +104,6 @@ protected:
 
     void setContextMenuActionProvider(ContextMenuActionProvider*);
     void setToolBarActionProvider(ToolBarActionProvider*);
-    void setUiStyle(UiStyle*);
 
     bool eventFilter(QObject* obj, QEvent* event) override;
 

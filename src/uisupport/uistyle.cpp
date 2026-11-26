@@ -29,6 +29,7 @@
 #include <QStyle>
 
 #include "buffersettings.h"
+#include "graphicalui.h"
 #include "icon.h"
 #include "qssparser.h"
 #include "quassel.h"
@@ -156,6 +157,10 @@ void UiStyle::setTheme(const QString& themeId)
     else {
         s.setValue("UseCustomStyleSheet", false);
     }
+
+    if (GraphicalUi::uiStyle()) {
+        GraphicalUi::uiStyle()->reload();
+    }
 }
 
 void UiStyle::reload()
@@ -173,7 +178,8 @@ void UiStyle::loadStyleSheet()
     UiStyleSettings s;
     QString theme = currentTheme();
 
-    if (QApplication::style()) {
+    auto* app = qobject_cast<QApplication*>(QCoreApplication::instance());
+    if (app && QApplication::style()) {
         QApplication::setPalette(QApplication::style()->standardPalette());
     }
 
@@ -223,20 +229,26 @@ void UiStyle::loadStyleSheet()
     if (!styleSheet.isEmpty()) {
         QssParser parser;
         parser.processStyleSheet(styleSheet);
-        QApplication::setPalette(parser.palette());
 
         _uiStylePalette = parser.uiStylePalette();
         _formats = parser.formats();
         _listItemFormats = parser.listItemFormats();
 
         styleSheet = styleSheet.trimmed();
-        if (!styleSheet.isEmpty())
-            qApp->setStyleSheet(styleSheet);  // pass the remaining sections to the application
-        else
-            qApp->setStyleSheet(QString());
+        auto* app = qobject_cast<QApplication*>(QCoreApplication::instance());
+        if (app) {
+            QApplication::setPalette(parser.palette());
+            if (!styleSheet.isEmpty())
+                app->setStyleSheet(styleSheet);  // pass the remaining sections to the application
+            else
+                app->setStyleSheet(QString());
+        }
     }
     else {
-        qApp->setStyleSheet(QString());
+        auto* app = qobject_cast<QApplication*>(QCoreApplication::instance());
+        if (app) {
+            app->setStyleSheet(QString());
+        }
     }
 
     emit changed();

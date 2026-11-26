@@ -247,10 +247,15 @@ void QtUi::bufferMarkedAsRead(BufferId bufferId)
 std::vector<std::pair<QString, QString>> QtUi::availableIconThemes() const
 {
     //: Supported icon theme names
-    static const std::vector<std::pair<QString, QString>> supported{{"breeze", tr("Breeze")},
-                                                                    {"breeze-dark", tr("Breeze Dark")},
+    static const std::vector<std::pair<QString, QString>> supported{
+        {"Papirus-Dark", tr("Papirus Dark")},
+        {"Papirus", tr("Papirus")},
+        {"breeze-dark", tr("Breeze Dark")},
+        {"breeze", tr("Breeze")},
+        {"Yaru-dark", tr("Yaru Dark")},
+        {"Yaru", tr("Yaru")},
 #ifdef WITH_OXYGEN_ICONS
-                                                                    {"oxygen", tr("Oxygen")}
+        {"oxygen", tr("Oxygen")}
 #endif
     };
 
@@ -302,10 +307,22 @@ QString determineFallbackTheme(const QStringList& availableThemes, const QString
     bool isDark = (currentTheme == "dark" || currentTheme == "tokyonight" || currentTheme == "darkmonokai"
                    || currentTheme == "darksolarized" || currentTheme == "classicdark");
 
-    if (isDark && availableThemes.contains("breeze-dark"))
-        return QStringLiteral("breeze-dark");
-    if (!isDark && availableThemes.contains("breeze"))
-        return QStringLiteral("breeze");
+    if (isDark) {
+        if (availableThemes.contains("Papirus-Dark"))
+            return QStringLiteral("Papirus-Dark");
+        if (availableThemes.contains("breeze-dark"))
+            return QStringLiteral("breeze-dark");
+        if (availableThemes.contains("Yaru-dark"))
+            return QStringLiteral("Yaru-dark");
+    }
+    else {
+        if (availableThemes.contains("Papirus"))
+            return QStringLiteral("Papirus");
+        if (availableThemes.contains("breeze"))
+            return QStringLiteral("breeze");
+        if (availableThemes.contains("Yaru"))
+            return QStringLiteral("Yaru");
+    }
     if (availableThemes.contains(systemIconTheme))
         return systemIconTheme;
 

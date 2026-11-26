@@ -67,6 +67,8 @@ public:
     QVariantMap retrieveAccountData(AccountId) const;
     void removeAccount(AccountId);
 
+    bool checkAndMigrateFlatpakConfig(const QString& flatpakConfigPath = QString());
+
     void setJumpKeyMap(const QHash<int, BufferId>& keyMap);
     QHash<int, BufferId> jumpKeyMap() const;
 

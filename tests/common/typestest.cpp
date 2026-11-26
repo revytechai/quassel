@@ -23,7 +23,10 @@
 #include <QByteArray>
 #include <QDataStream>
 #include <QObject>
+#include <QVariant>
 
+#include "bufferinfo.h"
+#include "quassel.h"
 #include "testglobal.h"
 #include "types.h"
 
@@ -74,6 +77,31 @@ TEST(TypesTest, enumSerialization)
     EXPECT_THAT((int)enum32, Eq(0x123456));
     EXPECT_THAT((int)enumQt16, Eq(0x4321));
     EXPECT_THAT((int)enumQt32, Eq(0xfedcba));
+}
+
+TEST(TypesTest, bufferInfoVariantSerialization)
+{
+    qRegisterMetaType<BufferInfo>("BufferInfo");
+    BufferInfo info1(BufferId(42), NetworkId(1), BufferInfo::ChannelBuffer, 0, "#testchannel");
+    QVariant v1 = QVariant::fromValue(info1);
+
+    QByteArray data;
+    QDataStream out(&data, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_4_2);
+    out << v1;
+
+    QDataStream in(data);
+    in.setVersion(QDataStream::Qt_4_2);
+    QVariant v2;
+    in >> v2;
+
+    EXPECT_TRUE(v2.isValid());
+    EXPECT_TRUE(v2.canConvert<BufferInfo>());
+    BufferInfo info2 = v2.value<BufferInfo>();
+    EXPECT_EQ(info2.bufferId(), BufferId(42));
+    EXPECT_EQ(info2.networkId(), NetworkId(1));
+    EXPECT_EQ(info2.type(), BufferInfo::ChannelBuffer);
+    EXPECT_EQ(info2.bufferName(), QStringLiteral("#testchannel"));
 }
 
 #include "typestest.moc"

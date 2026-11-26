@@ -414,7 +414,7 @@ private:
     mutable quint8 _senderHash;
 };
 
-uint qHash(UiStyle::ItemFormatType key, uint seed);
+UISUPPORT_EXPORT uint qHash(UiStyle::ItemFormatType key, uint seed = 0);
 
 // ---- Operators for dealing with enums ----------------------------------------------------------
 

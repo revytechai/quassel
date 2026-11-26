@@ -22,7 +22,10 @@
 
 #include <utility>
 
+#include <QDir>
+#include <QFileInfo>
 #include <QHostAddress>
+#include <QSettings>
 #include <QSslSocket>
 #include <QStringList>
 
@@ -206,6 +209,60 @@ void CoreAccountSettings::clearAccounts()
 {
     for (const QString& key : localChildGroups())
         removeLocalKey(key);
+}
+
+bool CoreAccountSettings::checkAndMigrateFlatpakConfig(const QString& flatpakConfigPath)
+{
+    QString path = flatpakConfigPath;
+    if (path.isEmpty()) {
+        path = QDir::homePath() + "/.var/app/org.quassel_irc.QuasselClient/config/quassel-irc.org/quasselclient.conf";
+    }
+
+    QFileInfo info(path);
+    if (!info.exists() || !info.isReadable()) {
+        return false;
+    }
+
+    QSettings flatpakSettings(path, QSettings::IniFormat);
+    flatpakSettings.beginGroup("CoreAccounts");
+    QStringList childGroups = flatpakSettings.childGroups();
+    if (childGroups.isEmpty()) {
+        flatpakSettings.endGroup();
+        return false;
+    }
+
+    for (const QString& group : childGroups) {
+        AccountId id = group.toInt();
+        if (!id.isValid())
+            continue;
+
+        flatpakSettings.beginGroup(group);
+        QVariantMap map;
+        for (const QString& key : flatpakSettings.childKeys()) {
+            map[key] = flatpakSettings.value(key);
+        }
+        flatpakSettings.endGroup();
+
+        if (!map.isEmpty()) {
+            storeAccountData(id, map);
+        }
+    }
+
+    int autoConnectAccount = flatpakSettings.value("AutoConnectAccount", 0).toInt();
+    if (autoConnectAccount > 0) {
+        setAutoConnectAccount(AccountId(autoConnectAccount));
+    }
+    bool autoConnectStartup = flatpakSettings.value("AutoConnectOnStartup", false).toBool();
+    setAutoConnectOnStartup(autoConnectStartup);
+    bool autoConnectFixed = flatpakSettings.value("AutoConnectToFixedAccount", false).toBool();
+    setAutoConnectToFixedAccount(autoConnectFixed);
+    int lastAcct = flatpakSettings.value("LastAccount", 0).toInt();
+    if (lastAcct > 0) {
+        setLastAccount(AccountId(lastAcct));
+    }
+
+    flatpakSettings.endGroup();
+    return true;
 }
 
 /***********************************************************************************************/

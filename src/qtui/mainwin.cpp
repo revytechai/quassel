@@ -619,6 +619,13 @@ void MainWin::setupMenus()
         });
     }
     connect(QtUi::style(), &UiStyle::changed, this, &MainWin::updateThemeMenu);
+
+    auto* refreshThemeAction = _viewMenu->addAction(icon::get({"view-refresh", "reload"}), tr("Refresh Theme && Icons"), this, []() {
+        QtUi::style()->reload();
+        QtUi::instance()->refreshIconTheme();
+    });
+    refreshThemeAction->setShortcut(QKeySequence::Refresh);
+
     _viewMenu->addSeparator();
 
     _viewMenu->addAction(coll->action("ToggleMenuBar"));
