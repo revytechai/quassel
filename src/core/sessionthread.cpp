@@ -36,16 +36,15 @@ class Worker : public QObject
     Q_OBJECT
 
 public:
-    Worker(UserId userId, bool restoreState, bool strictIdentEnabled)
+    Worker(UserId userId, bool strictIdentEnabled)
         : _userId{userId}
-        , _restoreState{restoreState}
         , _strictIdentEnabled{strictIdentEnabled}
     {}
 
 public slots:
     void initialize()
     {
-        _session = new CoreSession{_userId, _restoreState, _strictIdentEnabled, this};
+        _session = new CoreSession{_userId, _strictIdentEnabled, this};
         connect(_session, &QObject::destroyed, QThread::currentThread(), &QThread::quit);
         connect(_session, &CoreSession::sessionStateReceived, Core::instance(), &Core::sessionStateReceived);
         emit initialized();
@@ -84,17 +83,16 @@ signals:
 
 private:
     UserId _userId;
-    bool _restoreState;
     bool _strictIdentEnabled;  ///< Whether or not strict ident mode is enabled, locking users' idents to Quassel username
     QPointer<CoreSession> _session;
 };
 
 }  // namespace
 
-SessionThread::SessionThread(UserId uid, bool restoreState, bool strictIdentEnabled, QObject* parent)
+SessionThread::SessionThread(UserId uid, bool strictIdentEnabled, QObject* parent)
     : QObject(parent)
 {
-    auto worker = new Worker(uid, restoreState, strictIdentEnabled);
+    auto worker = new Worker(uid, strictIdentEnabled);
     worker->moveToThread(&_sessionThread);
     connect(&_sessionThread, &QThread::started, worker, &Worker::initialize);
     connect(&_sessionThread, &QThread::finished, worker, &QObject::deleteLater);

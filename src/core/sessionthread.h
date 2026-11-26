@@ -36,7 +36,7 @@ class SessionThread : public QObject
     Q_OBJECT
 
 public:
-    SessionThread(UserId user, bool restoreState, bool strictIdentEnabled, QObject* parent = nullptr);
+    SessionThread(UserId user, bool strictIdentEnabled, QObject* parent = nullptr);
     ~SessionThread() override;
 
 public slots:

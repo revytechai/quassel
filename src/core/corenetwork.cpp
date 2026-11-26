@@ -42,7 +42,7 @@ CoreNetwork::CoreNetwork(const NetworkId& networkid, CoreSession* session)
     , _userInputHandler(new CoreUserInputHandler(this))
     , _metricsServer(Core::instance()->metricsServer())
     , _autoReconnectCount(0)
-    , _quitRequested(false)
+    , _disconnectReason(DisconnectReason::None)
     , _disconnectExpected(false)
     , _previousConnectionAttemptFailed(false)
     , _lastUsedServerIndex(0)
@@ -285,7 +285,13 @@ void CoreNetwork::disconnectFromIrc(bool requested, const QString& reason, bool 
 {
     // Disconnecting from the network, should expect a socket close or error
     _disconnectExpected = true;
-    _quitRequested = requested;  // see socketDisconnected();
+    // Record why the network is disconnected.  Only a disconnect that the user asked for
+    // clears the "connected" flag of the network, so a shutdown that follows a disconnect that
+    // the user asked for must not replace the reason of that disconnect.
+    if (requested)
+        _disconnectReason = DisconnectReason::UserRequest;
+    else if (_shuttingDown && _disconnectReason == DisconnectReason::None)
+        _disconnectReason = DisconnectReason::Shutdown;
     if (!withReconnect) {
         _autoReconnectTimer.stop();
         _autoReconnectCount = 0;  // prohibiting auto reconnect
@@ -642,18 +648,29 @@ void CoreNetwork::onSocketDisconnected()
     emit socketDisconnected(identityPtr(), localAddress(), localPort(), peerAddress(), peerPort(), _socketId);
     // Reset disconnect expectations
     _disconnectExpected = false;
-    if (_quitRequested) {
-        _quitRequested = false;
+    // Note: the shutdown must not clear the "connected" flag of the network.  That flag says
+    // that the network should be connected, and the core uses it to reconnect the networks when
+    // it starts up again.  Only a disconnect that was requested by the user clears it.
+    switch (_disconnectReason) {
+    case DisconnectReason::UserRequest:
         setConnectionState(Network::Disconnected);
         Core::setNetworkConnected(userId(), networkId(), false);
+        break;
+    case DisconnectReason::Shutdown:
+        // The core is shutting down: the network keeps its "connected" flag, so that the
+        // network is reconnected when the core is started again.
+        break;
+    case DisconnectReason::None:
+        if (_autoReconnectCount != 0) {
+            setConnectionState(Network::Reconnecting);
+            if (_autoReconnectCount == -1 || _autoReconnectCount == autoReconnectRetries())
+                doAutoReconnect();  // first try is immediate
+            else
+                _autoReconnectTimer.start();
+        }
+        break;
     }
-    else if (_autoReconnectCount != 0) {
-        setConnectionState(Network::Reconnecting);
-        if (_autoReconnectCount == -1 || _autoReconnectCount == autoReconnectRetries())
-            doAutoReconnect();  // first try is immediate
-        else
-            _autoReconnectTimer.start();
-    }
+    _disconnectReason = DisconnectReason::None;
 
     if (_metricsServer) {
         _metricsServer->removeNetwork(userId());
@@ -689,7 +706,7 @@ void CoreNetwork::networkInitialized()
     setConnectionState(Network::Initialized);
     setConnected(true);
     _disconnectExpected = false;
-    _quitRequested = false;
+    _disconnectReason = DisconnectReason::None;
 
     // Update the TokenBucket with specified rate-limiting settings, removing the force-unlimited
     // flag used for initial registration and capability negotiation.

@@ -65,7 +65,7 @@ class CoreSession : public QObject
     Q_OBJECT
 
 public:
-    CoreSession(UserId, bool restoreState, bool strictIdentEnabled, QObject* parent = nullptr);
+    CoreSession(UserId, bool strictIdentEnabled, QObject* parent = nullptr);
 
     std::vector<BufferInfo> buffers() const;
     inline UserId user() const { return _user; }

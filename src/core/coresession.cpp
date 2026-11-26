@@ -57,7 +57,7 @@ public:
     {}
 };
 
-CoreSession::CoreSession(UserId uid, bool restoreState, bool strictIdentEnabled, QObject* parent)
+CoreSession::CoreSession(UserId uid, bool strictIdentEnabled, QObject* parent)
     : QObject(parent)
     , _backgroundTaskHandler(new BackgroundTaskHandler(this))
     , _user(uid)
@@ -145,8 +145,13 @@ CoreSession::CoreSession(UserId uid, bool restoreState, bool strictIdentEnabled,
     connect(this, &CoreSession::networkRemoved, &_highlightRuleManager, &HighlightRuleManager::networkRemoved);
     p->synchronize(transferManager());
     // Restore session state
-    if (restoreState)
-        restoreSessionState();
+    //
+    // The "connected" flag of a network in the database is the single source of truth for
+    // whether that network should be connected, so every session restores it - not only the
+    // sessions that were restored from the core state.  Otherwise a network that was connected
+    // before the core was stopped would stay disconnected until a client explicitly asks for
+    // the connection.
+    restoreSessionState();
 
     emit initialized();
 

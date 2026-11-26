@@ -673,6 +673,27 @@ public:
                          const QString& authenticator,
                          const QVariantMap& authSetupMap);
 
+    /**
+     * Returns the session of the given user, creating it when it does not exist yet
+     *
+     * The list of sessions is persisted right away, so that a core that is stopped
+     * ungracefully does not lose the sessions it had: the core state tells a restarted core
+     * which sessions (and with them which networks) to restore.
+     *
+     * @param[in] userId  The user whose session is wanted
+     * @return The session of the user
+     */
+    SessionThread* sessionForUser(UserId userId);
+
+    /**
+     * Restores the sessions of the users whose state was persisted
+     *
+     * The sessions are created without persisting the core state after every one of them, and
+     * the state is persisted once, after all sessions have been restored.  A state that is
+     * written while the restore is still running would hold only a part of the sessions.
+     */
+    void restoreState();
+
     static inline QTimer* syncTimer() { return &instance()->_storageSyncTimer; }
 
     inline OidentdConfigGenerator* oidentdConfigGenerator() const { return _oidentdConfigGenerator; }
@@ -752,7 +773,15 @@ private slots:
     void onSessionShutdown(SessionThread* session);
 
 private:
-    SessionThread* sessionForUser(UserId userId, bool restoreState = false);
+    /**
+     * Creates the session of the given user, without persisting the core state
+     *
+     * The caller is responsible for saving the state when the list of sessions changed: a
+     * state that is written while a list of sessions is still being restored would hold only
+     * a part of that list.
+     */
+    SessionThread* createSession(UserId userId);
+
     void addClientHelper(RemotePeer* peer, UserId uid);
     // void processCoreSetup(QTcpSocket *socket, QVariantMap &msg);
     QString setupCoreForInternalUsage();
@@ -779,7 +808,6 @@ private:
     void saveAuthenticatorSettings(const QString& backend, const QVariantMap& settings);
 
     void saveState();
-    void restoreState();
 
     template<typename Backend>
     QVariantMap promptForSettings(const Backend* backend);

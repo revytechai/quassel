@@ -330,10 +330,16 @@ void Core::restoreState()
 
     if (activeSessions.count() > 0) {
         qInfo() << "Restoring previous core state...";
+        // The sessions are created without persisting the core state after every one of them:
+        // a state that is written while the restore is still running holds only the sessions
+        // that were restored so far.  A core that stops in the middle of the restore would
+        // then lose the sessions that were not restored yet.
         for (auto&& v : activeSessions) {
             UserId user = v.value<UserId>();
-            sessionForUser(user, true);
+            createSession(user);
         }
+        // The state is persisted once, after all sessions have been restored.
+        saveState();
     }
 }
 
@@ -822,12 +828,31 @@ void Core::setupInternalClientSession(QPointer<InternalPeer> clientPeer)
     sessionThread->addClient(corePeer);
 }
 
-SessionThread* Core::sessionForUser(UserId uid, bool restore)
+SessionThread* Core::sessionForUser(UserId uid)
 {
     if (_sessions.contains(uid))
         return _sessions[uid];
 
-    return (_sessions[uid] = new SessionThread(uid, restore, strictIdentEnabled(), this));
+    auto* session = createSession(uid);
+
+    // Persist the list of sessions right away, and not only when the core is shut down.  The
+    // core state is what tells a restarted core which sessions (and with them which networks)
+    // to restore, so writing it only on shutdown would lose it whenever the core is stopped
+    // ungracefully.
+    saveState();
+
+    return session;
+}
+
+SessionThread* Core::createSession(UserId uid)
+{
+    if (_sessions.contains(uid))
+        return _sessions[uid];
+
+    auto* session = new SessionThread(uid, strictIdentEnabled(), this);
+    _sessions[uid] = session;
+
+    return session;
 }
 
 void Core::socketError(QAbstractSocket::SocketError err, const QString& errorString)

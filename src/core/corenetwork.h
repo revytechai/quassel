@@ -47,6 +47,22 @@ class CoreNetwork : public Network
     Q_OBJECT
 
 public:
+    /**
+     * The reason why a network is disconnected
+     *
+     * The reason is recorded explicitly, because it decides whether the "connected" flag of
+     * the network is cleared.  That flag says that the network should be connected, and the
+     * core uses it to reconnect the networks when it starts up again.  A disconnect that the
+     * user asked for clears the flag, a disconnect that the core asked for while shutting
+     * down keeps it.
+     */
+    enum class DisconnectReason
+    {
+        None,        ///< No disconnect was requested
+        UserRequest, ///< The user asked for the network to be disconnected
+        Shutdown     ///< The core is shutting down
+    };
+
     CoreNetwork(const NetworkId& networkid, CoreSession* session);
     ~CoreNetwork() override;
 
@@ -522,7 +538,7 @@ private:
     /* this flag triggers quitRequested() once the socket is closed
      * it is needed to determine whether or not the connection needs to be
      * in the automatic session restore. */
-    bool _quitRequested;
+    DisconnectReason _disconnectReason;
     QString _quitReason;
 
     bool _disconnectExpected;  /// If true, connection is quitting, expect a socket close
