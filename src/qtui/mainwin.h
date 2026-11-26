@@ -218,7 +218,7 @@ private slots:
 
     void clientNetworkCreated(NetworkId);
     void clientNetworkRemoved(NetworkId);
-    void clientNetworkUpdated();
+    void clientNetworkUpdated(const Network* net = nullptr);
     void connectOrDisconnectFromNet();
 
     void saveMenuBarStatus(bool enabled);

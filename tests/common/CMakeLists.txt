@@ -28,6 +28,13 @@ quassel_add_test(CoreAccountTest
         Quassel::Test::Util
 )
 
+quassel_add_test(ToolBarActionProviderTest
+    LIBRARIES
+        Quassel::UiSupport
+        Quassel::Client
+        Quassel::Test::Util
+)
+
 quassel_add_test(TypesTest)
 
 quassel_add_test(UtilTest)

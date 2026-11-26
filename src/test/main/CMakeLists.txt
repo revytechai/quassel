@@ -8,5 +8,6 @@ target_link_libraries(${TARGET}
     PUBLIC
         ${QUASSEL_QT_CORE_TARGET}
         ${QUASSEL_QT_GUI_TARGET}
+        ${QUASSEL_QT_WIDGETS_TARGET}
         Quassel::Test::Global
 )

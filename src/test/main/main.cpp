@@ -20,7 +20,7 @@
 
 #include "test-main-export.h"
 
-#include <QGuiApplication>
+#include <QApplication>
 
 #include <gmock/gmock.h>
 
@@ -29,7 +29,7 @@ TEST_MAIN_EXPORT int main(int argc, char** argv)
     ::testing::InitGoogleTest(&argc, argv);
     // Use offscreen platform for headless test execution
     qputenv("QT_QPA_PLATFORM", "offscreen");
-    QGuiApplication app(argc, argv);
+    QApplication app(argc, argv);
 
     return RUN_ALL_TESTS();
 }

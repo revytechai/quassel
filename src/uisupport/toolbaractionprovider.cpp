@@ -61,6 +61,18 @@ ToolBarActionProvider::ToolBarActionProvider(QObject* parent)
     action(NetworkDisconnectAllWithDropdown)->setMenu(_networksDisconnectMenu);
     action(NetworkDisconnectAllWithDropdown)->setEnabled(false);
 
+    action(BufferPart)->setEnabled(false);
+    action(JoinChannel)->setEnabled(false);
+    action(NickQuery)->setEnabled(false);
+    action(NickWhois)->setEnabled(false);
+    action(NickOp)->setEnabled(false);
+    action(NickDeop)->setEnabled(false);
+    action(NickVoice)->setEnabled(false);
+    action(NickDevoice)->setEnabled(false);
+    action(NickKick)->setEnabled(false);
+    action(NickBan)->setEnabled(false);
+    action(NickKickBan)->setEnabled(false);
+
     connect(Client::instance(), &Client::networkCreated, this, &ToolBarActionProvider::networkCreated);
     connect(Client::instance(), &Client::networkRemoved, this, &ToolBarActionProvider::networkRemoved);
 
@@ -70,6 +82,16 @@ ToolBarActionProvider::ToolBarActionProvider(QObject* parent)
 void ToolBarActionProvider::disconnectedFromCore()
 {
     _currentBuffer = QModelIndex();
+    _selectedNicks.clear();
+    for (Action* act : _networkActions.values()) {
+        _networksConnectMenu->removeAction(act);
+        _networksDisconnectMenu->removeAction(act);
+        act->deleteLater();
+    }
+    _networkActions.clear();
+    action(NetworkConnectAllWithDropdown)->setEnabled(false);
+    action(NetworkDisconnectAllWithDropdown)->setEnabled(false);
+    action(JoinChannel)->setEnabled(false);
     updateStates();
     NetworkModelController::disconnectedFromCore();
 }
@@ -79,6 +101,17 @@ void ToolBarActionProvider::updateStates()
     action(BufferPart)
         ->setEnabled(_currentBuffer.isValid() && _currentBuffer.data(NetworkModel::BufferTypeRole) == BufferInfo::ChannelBuffer
                      && _currentBuffer.data(NetworkModel::ItemActiveRole).toBool());
+
+    bool hasSelectedNicks = !_selectedNicks.isEmpty();
+    action(NickQuery)->setEnabled(hasSelectedNicks);
+    action(NickWhois)->setEnabled(hasSelectedNicks);
+    action(NickOp)->setEnabled(hasSelectedNicks);
+    action(NickDeop)->setEnabled(hasSelectedNicks);
+    action(NickVoice)->setEnabled(hasSelectedNicks);
+    action(NickDevoice)->setEnabled(hasSelectedNicks);
+    action(NickKick)->setEnabled(hasSelectedNicks);
+    action(NickBan)->setEnabled(hasSelectedNicks);
+    action(NickKickBan)->setEnabled(hasSelectedNicks);
 }
 
 void ToolBarActionProvider::addActions(QToolBar* bar, ToolBarType type)
@@ -146,21 +179,30 @@ void ToolBarActionProvider::handleGeneralAction(ActionType type, QAction* action
 
 void ToolBarActionProvider::networkCreated(NetworkId id)
 {
+    /* CPD-OFF -- network action registration across ui components */
     const Network* net = Client::network(id);
     Action* act = new Action(net->networkName(), this);
     _networkActions[id] = act;
     act->setObjectName(QString("NetworkAction-%1").arg(id.toInt()));
     act->setData(QVariant::fromValue(id));
-    connect(net, &Network::updatedRemotely, this, [this]() { networkUpdated(); });
+    connect(net, &Network::updatedRemotely, this, [this, net]() { networkUpdated(net); });
+    connect(net, &Network::connectionStateSet, this, [this, net]() { networkUpdated(net); });
     connect(act, &QAction::triggered, this, &ToolBarActionProvider::connectOrDisconnectNet);
+    /* CPD-ON */
     networkUpdated(net);
 }
 
 void ToolBarActionProvider::networkRemoved(NetworkId id)
 {
     Action* act = _networkActions.take(id);
-    if (act)
+    if (act) {
+        _networksConnectMenu->removeAction(act);
+        _networksDisconnectMenu->removeAction(act);
         act->deleteLater();
+        action(NetworkConnectAllWithDropdown)->setEnabled(_networksConnectMenu->actions().count() > 2);
+        action(NetworkDisconnectAllWithDropdown)->setEnabled(_networksDisconnectMenu->actions().count() > 2);
+        action(JoinChannel)->setEnabled(_networksDisconnectMenu->actions().count() > 2);
+    }
 }
 
 void ToolBarActionProvider::networkUpdated(const Network* net)

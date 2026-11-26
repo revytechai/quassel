@@ -352,15 +352,17 @@ void MainWin::setupActions()
     ActionCollection* coll = QtUi::actionCollection("General", tr("General"));
 
     // File
+    /* CPD-OFF -- action collection initialization */
     coll->addActions(
-        {{"ConnectCore", new Action(icon::get("connect-quassel"), tr("&Connect to Core..."), coll, this, &MainWin::showCoreConnectionDlg)},
+        {{"ConnectCore", new Action(icon::get({"connect-quassel", "network-connect"}), tr("&Connect to Core..."), coll, this, &MainWin::showCoreConnectionDlg)},
          {"DisconnectCore",
-          new Action(icon::get("disconnect-quassel"), tr("&Disconnect from Core"), coll, Client::instance(), &Client::disconnectFromCore)},
+          new Action(icon::get({"disconnect-quassel", "network-disconnect"}), tr("&Disconnect from Core"), coll, Client::instance(), &Client::disconnectFromCore)},
          {"ChangePassword", new Action(icon::get("dialog-password"), tr("Change &Password..."), coll, this, &MainWin::showPasswordChangeDlg)},
          {"CoreInfo", new Action(icon::get("help-about"), tr("Core &Info..."), coll, this, &MainWin::showCoreInfoDlg)},
          {"ConfigureNetworks",
           new Action(icon::get("configure"), tr("Configure &Networks..."), coll, this, &MainWin::onConfigureNetworksTriggered)},
          {"Quit", new Action(icon::get("application-exit"), tr("&Quit"), coll, Quassel::instance(), &Quassel::quit, Qt::CTRL | Qt::Key_Q)}});
+    /* CPD-ON */
 
     // View
     coll->addAction("ConfigureBufferViews", new Action(tr("&Configure Chat Lists..."), coll, this, &MainWin::onConfigureViewsTriggered));
@@ -1749,12 +1751,15 @@ void MainWin::currentBufferChanged(BufferId buffer)
 
 void MainWin::clientNetworkCreated(NetworkId id)
 {
+    /* CPD-OFF -- network action registration across ui components */
     const Network* net = Client::network(id);
     auto* act = new QAction(net->networkName(), this);
     act->setObjectName(QString("NetworkAction-%1").arg(id.toInt()));
     act->setData(QVariant::fromValue(id));
-    connect(net, &SyncableObject::updatedRemotely, this, &MainWin::clientNetworkUpdated);
+    connect(net, &SyncableObject::updatedRemotely, this, [this, net]() { clientNetworkUpdated(net); });
+    connect(net, &Network::connectionStateSet, this, [this, net]() { clientNetworkUpdated(net); });
     connect(act, &QAction::triggered, this, &MainWin::connectOrDisconnectFromNet);
+    /* CPD-ON */
 
     QAction* beforeAction = nullptr;
     for (QAction* action : _networksMenu->actions()) {
@@ -1766,11 +1771,13 @@ void MainWin::clientNetworkCreated(NetworkId id)
         }
     }
     _networksMenu->insertAction(beforeAction, act);
+    clientNetworkUpdated(net);
 }
 
-void MainWin::clientNetworkUpdated()
+void MainWin::clientNetworkUpdated(const Network* net)
 {
-    const auto* net = qobject_cast<const Network*>(sender());
+    if (!net)
+        net = qobject_cast<const Network*>(sender());
     if (!net)
         return;
 
