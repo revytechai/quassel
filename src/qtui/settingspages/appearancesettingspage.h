@@ -55,6 +55,8 @@ private:
     void initStyleComboBox();
     void initLanguageComboBox();
     void initIconThemeComboBox();
+    void initThemeComboBox();
+    void updateThemeWidgetStates();
     QLocale selectedLocale() const;
     QString selectedIconTheme() const;
 

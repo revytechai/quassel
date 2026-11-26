@@ -248,6 +248,15 @@ public:
      */
     const QColor defaultSenderColorSelf = QColor(0, 0, 0);
 
+    struct ThemeInfo {
+        QString id;
+        QString name;
+        QString filePath;
+    };
+    static QList<ThemeInfo> availableThemes();
+    static QString currentTheme();
+    static void setTheme(const QString& themeId);
+
     static FormatType formatType(Message::Type msgType);
     static StyledString styleString(const QString& string, FormatType baseFormat = FormatType::Base);
     static QString mircToInternal(const QString&);

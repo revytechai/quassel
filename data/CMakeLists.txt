@@ -21,12 +21,12 @@ if (BUILD_GUI)
         endif()
     endif()
 
-    if (EMBED_DATA)
-        quassel_add_resource(Data PREFIX data PATTERNS
-            networks.ini
-            stylesheets/default.qss
-        )
-    else()
+    quassel_add_resource(Data PREFIX data PATTERNS
+        networks.ini
+        stylesheets/*.qss
+    )
+
+    if (NOT EMBED_DATA)
         install(FILES networks.ini DESTINATION ${CMAKE_INSTALL_DATADIR}/quassel)
         install(DIRECTORY stylesheets DESTINATION ${CMAKE_INSTALL_DATADIR}/quassel)
     endif()

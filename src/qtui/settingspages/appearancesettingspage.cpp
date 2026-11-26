@@ -52,6 +52,12 @@ AppearanceSettingsPage::AppearanceSettingsPage(QWidget* parent)
     initStyleComboBox();
     initLanguageComboBox();
     initIconThemeComboBox();
+    initThemeComboBox();
+
+    connect(ui.themeComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) {
+        updateThemeWidgetStates();
+        widgetHasChanged();
+    });
 
     for (QComboBox* comboBox : findChildren<QComboBox*>()) {
         connect(comboBox, &QComboBox::currentTextChanged, this, &AppearanceSettingsPage::widgetHasChanged);
@@ -125,10 +131,28 @@ void AppearanceSettingsPage::initIconThemeComboBox()
     }
 }
 
+void AppearanceSettingsPage::initThemeComboBox()
+{
+    ui.themeComboBox->clear();
+    for (const auto& theme : UiStyle::availableThemes()) {
+        ui.themeComboBox->addItem(theme.name, theme.id);
+    }
+}
+
+void AppearanceSettingsPage::updateThemeWidgetStates()
+{
+    bool isCustom = (ui.themeComboBox->currentData().toString() == "custom");
+    ui.useCustomStyleSheet->setVisible(isCustom);
+    ui.customStyleSheetPath->setEnabled(isCustom);
+    ui.chooseStyleSheet->setEnabled(isCustom);
+}
+
 void AppearanceSettingsPage::defaults()
 {
     ui.styleComboBox->setCurrentIndex(0);
     ui.languageComboBox->setCurrentIndex(1);
+    ui.themeComboBox->setCurrentIndex(0);
+    updateThemeWidgetStates();
 
     SettingsPage::defaults();
     widgetHasChanged();
@@ -169,6 +193,15 @@ void AppearanceSettingsPage::load()
         ui.iconThemeComboBox->setCurrentIndex(idx > 0 ? idx : 0);
     }
     ui.iconThemeComboBox->setProperty("storedValue", ui.iconThemeComboBox->currentIndex());
+
+    // Theme
+    QString theme = UiStyle::currentTheme();
+    int themeIdx = ui.themeComboBox->findData(theme);
+    if (themeIdx < 0)
+        themeIdx = 0;
+    ui.themeComboBox->setCurrentIndex(themeIdx);
+    ui.themeComboBox->setProperty("storedValue", themeIdx);
+    updateThemeWidgetStates();
 
     // bufferSettings:
     BufferSettings bufferSettings;
@@ -225,9 +258,18 @@ void AppearanceSettingsPage::save()
     }
     ui.iconThemeComboBox->setProperty("storedValue", ui.iconThemeComboBox->currentIndex());
 
-    bool needsStyleReload = ui.useCustomStyleSheet->isChecked() != ui.useCustomStyleSheet->property("storedValue").toBool()
-                            || (ui.useCustomStyleSheet->isChecked()
-                                && ui.customStyleSheetPath->text() != ui.customStyleSheetPath->property("storedValue").toString());
+    QString selectedTheme = ui.themeComboBox->currentData().toString();
+    int storedThemeIdx = ui.themeComboBox->property("storedValue").toInt();
+    bool themeChanged = (ui.themeComboBox->currentIndex() != storedThemeIdx);
+    if (themeChanged) {
+        UiStyle::setTheme(selectedTheme);
+        ui.themeComboBox->setProperty("storedValue", ui.themeComboBox->currentIndex());
+    }
+
+    bool needsStyleReload = themeChanged
+                            || (selectedTheme == "custom"
+                                && (ui.useCustomStyleSheet->isChecked() != ui.useCustomStyleSheet->property("storedValue").toBool()
+                                    || ui.customStyleSheetPath->text() != ui.customStyleSheetPath->property("storedValue").toString()));
 
     BufferSettings bufferSettings;
     int redirectTarget = 0;
@@ -309,6 +351,8 @@ bool AppearanceSettingsPage::testHasChanged()
     if (ui.languageComboBox->currentIndex() != ui.languageComboBox->property("storedValue").toInt())
         return true;
     if (ui.iconThemeComboBox->currentIndex() != ui.iconThemeComboBox->property("storedValue").toInt())
+        return true;
+    if (ui.themeComboBox->currentIndex() != ui.themeComboBox->property("storedValue").toInt())
         return true;
 
     if (SettingsPage::hasChanged(ui.userNoticesInStatusBuffer))

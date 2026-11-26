@@ -153,6 +153,7 @@ private slots:
     void onConfigureNetworksTriggered();
     void onConfigureViewsTriggered();
     void onLockLayoutToggled(bool lock);
+    void updateThemeMenu();
 
     /**
      * Apply the active color to the input widget selected or typed text
@@ -275,6 +276,7 @@ private:
     QAction* _fullScreenAction{nullptr};
     QMenu *_fileMenu, *_networksMenu, *_viewMenu, *_bufferViewsMenu, *_settingsMenu, *_helpMenu, *_helpDebugMenu;
     QMenu* _toolbarMenu;
+    QMenu* _themeMenu{nullptr};
     QToolBar *_mainToolBar, *_chatViewToolBar, *_nickToolBar;
 
     QWidget* _awayLog{nullptr};

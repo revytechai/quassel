@@ -26,6 +26,7 @@
 #include <QApplication>
 #include <QColor>
 #include <QRegularExpression>
+#include <QStyle>
 
 #include "buffersettings.h"
 #include "icon.h"
@@ -119,6 +120,44 @@ UiStyle::~UiStyle()
     qDeleteAll(_metricsCache);
 }
 
+QList<UiStyle::ThemeInfo> UiStyle::availableThemes()
+{
+    static const QList<ThemeInfo> themes = {
+        {QStringLiteral("default"), QCoreApplication::translate("UiStyle", "Default (Light)"), QStringLiteral("stylesheets/default.qss")},
+        {QStringLiteral("dark"), QCoreApplication::translate("UiStyle", "Modern Dark"), QStringLiteral("stylesheets/dark.qss")},
+        {QStringLiteral("tokyonight"), QCoreApplication::translate("UiStyle", "Tokyo Night"), QStringLiteral("stylesheets/tokyonight.qss")},
+        {QStringLiteral("darkmonokai"), QCoreApplication::translate("UiStyle", "Dark Monokai"), QStringLiteral("stylesheets/DarkMonokai.qss")},
+        {QStringLiteral("darksolarized"), QCoreApplication::translate("UiStyle", "Dark Solarized"), QStringLiteral("stylesheets/DarkSolarized.qss")},
+        {QStringLiteral("classicdark"), QCoreApplication::translate("UiStyle", "Classic Dark"), QStringLiteral("stylesheets/jussi01-darktheme.qss")},
+        {QStringLiteral("custom"), QCoreApplication::translate("UiStyle", "Custom Stylesheet..."), QString()}
+    };
+    return themes;
+}
+
+QString UiStyle::currentTheme()
+{
+    UiStyleSettings s;
+    QString theme = s.value("Theme", QString()).toString();
+    if (theme.isEmpty()) {
+        if (s.value("UseCustomStyleSheet", false).toBool())
+            return QStringLiteral("custom");
+        return QStringLiteral("default");
+    }
+    return theme;
+}
+
+void UiStyle::setTheme(const QString& themeId)
+{
+    UiStyleSettings s;
+    s.setValue("Theme", themeId);
+    if (themeId == "custom") {
+        s.setValue("UseCustomStyleSheet", true);
+    }
+    else {
+        s.setValue("UseCustomStyleSheet", false);
+    }
+}
+
 void UiStyle::reload()
 {
     loadStyleSheet();
@@ -132,11 +171,33 @@ void UiStyle::loadStyleSheet()
     _formats.clear();
 
     UiStyleSettings s;
+    QString theme = currentTheme();
+
+    if (QApplication::style()) {
+        QApplication::setPalette(QApplication::style()->standardPalette());
+    }
 
     QString styleSheet;
     styleSheet += loadStyleSheet("file:///" + Quassel::findDataFilePath("stylesheets/default.qss"));
     styleSheet += loadStyleSheet("file:///" + Quassel::configDirPath() + "settings.qss");
-    if (s.value("UseCustomStyleSheet", false).toBool()) {
+
+    QString themeSheetPath;
+    if (theme == "dark") {
+        themeSheetPath = Quassel::findDataFilePath("stylesheets/dark.qss");
+    }
+    else if (theme == "tokyonight") {
+        themeSheetPath = Quassel::findDataFilePath("stylesheets/tokyonight.qss");
+    }
+    else if (theme == "darkmonokai") {
+        themeSheetPath = Quassel::findDataFilePath("stylesheets/DarkMonokai.qss");
+    }
+    else if (theme == "darksolarized") {
+        themeSheetPath = Quassel::findDataFilePath("stylesheets/DarkSolarized.qss");
+    }
+    else if (theme == "classicdark") {
+        themeSheetPath = Quassel::findDataFilePath("stylesheets/jussi01-darktheme.qss");
+    }
+    else if (theme == "custom" || s.value("UseCustomStyleSheet", false).toBool()) {
         QString customSheetPath(s.value("CustomStyleSheetPath").toString());
         QString customSheet = loadStyleSheet("file:///" + customSheetPath, true);
         if (customSheet.isEmpty()) {
@@ -152,6 +213,11 @@ void UiStyle::loadStyleSheet()
         }
         styleSheet += customSheet;
     }
+
+    if (!themeSheetPath.isEmpty() && theme != "custom") {
+        styleSheet += loadStyleSheet("file:///" + themeSheetPath, true);
+    }
+
     styleSheet += loadStyleSheet("file:///" + Quassel::optionValue("qss"), true);
 
     if (!styleSheet.isEmpty()) {
@@ -166,6 +232,11 @@ void UiStyle::loadStyleSheet()
         styleSheet = styleSheet.trimmed();
         if (!styleSheet.isEmpty())
             qApp->setStyleSheet(styleSheet);  // pass the remaining sections to the application
+        else
+            qApp->setStyleSheet(QString());
+    }
+    else {
+        qApp->setStyleSheet(QString());
     }
 
     emit changed();
@@ -176,20 +247,20 @@ QString UiStyle::loadStyleSheet(const QString& styleSheet, bool shouldExist)
     QString ss = styleSheet;
     if (ss.startsWith("file:///")) {
         ss.remove(0, 8);
-        if (ss.isEmpty())
-            return QString();
+    }
+    if (ss.isEmpty())
+        return QString();
 
-        QFile file(ss);
-        if (file.open(QFile::ReadOnly)) {
-            QTextStream stream(&file);
-            ss = stream.readAll();
-            file.close();
-        }
-        else {
-            if (shouldExist)
-                qWarning() << "Could not open stylesheet file:" << file.fileName();
-            return QString();
-        }
+    QFile file(ss);
+    if (file.open(QFile::ReadOnly)) {
+        QTextStream stream(&file);
+        ss = stream.readAll();
+        file.close();
+    }
+    else {
+        if (shouldExist)
+            qWarning() << "Could not open stylesheet file:" << file.fileName();
+        return QString();
     }
     return ss;
 }

@@ -22,9 +22,10 @@
 
 #include <utility>
 
+#include "uisupport-export.h"
 #include "uistyle.h"
 
-class QssParser
+class UISUPPORT_EXPORT QssParser
 {
     Q_DECLARE_TR_FUNCTIONS(QssParser)
 

@@ -20,6 +20,7 @@
 
 #include "mainwin.h"
 
+#include <QActionGroup>
 #include <QIcon>
 #include <QInputDialog>
 #include <QMenuBar>
@@ -599,6 +600,25 @@ void MainWin::setupMenus()
     _bufferViewsMenu = _viewMenu->addMenu(tr("&Chat Lists"));
     _bufferViewsMenu->addAction(coll->action("ConfigureBufferViews"));
     _toolbarMenu = _viewMenu->addMenu(tr("&Toolbars"));
+    _themeMenu = _viewMenu->addMenu(tr("Color &Theme"));
+    auto* themeGroup = new QActionGroup(this);
+    themeGroup->setExclusive(true);
+    for (const auto& theme : UiStyle::availableThemes()) {
+        if (theme.id == "custom")
+            continue;
+        QAction* action = _themeMenu->addAction(theme.name);
+        action->setCheckable(true);
+        action->setData(theme.id);
+        themeGroup->addAction(action);
+        if (theme.id == UiStyle::currentTheme())
+            action->setChecked(true);
+        connect(action, &QAction::triggered, this, [action, this]() {
+            UiStyle::setTheme(action->data().toString());
+            QtUi::style()->reload();
+            QtUi::instance()->refreshIconTheme();
+        });
+    }
+    connect(QtUi::style(), &UiStyle::changed, this, &MainWin::updateThemeMenu);
     _viewMenu->addSeparator();
 
     _viewMenu->addAction(coll->action("ToggleMenuBar"));
@@ -1958,4 +1978,14 @@ void MainWin::onShowResourceTreeTriggered()
 void MainWin::showStatusBarMessage(const QString& message)
 {
     statusBar()->showMessage(message, 10000);
+}
+
+void MainWin::updateThemeMenu()
+{
+    if (!_themeMenu)
+        return;
+    QString current = UiStyle::currentTheme();
+    for (QAction* action : _themeMenu->actions()) {
+        action->setChecked(action->data().toString() == current);
+    }
 }

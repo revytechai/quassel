@@ -289,6 +289,31 @@ void QtUi::setupIconTheme()
     refreshIconTheme();
 }
 
+namespace {
+
+QString determineFallbackTheme(const QStringList& availableThemes, const QString& systemIconTheme)
+{
+    UiStyleSettings s;
+    QString fallbackTheme{s.value("Icons/FallbackTheme").toString()};
+    if (!fallbackTheme.isEmpty() && availableThemes.contains(fallbackTheme))
+        return fallbackTheme;
+
+    QString currentTheme = UiStyle::currentTheme();
+    bool isDark = (currentTheme == "dark" || currentTheme == "tokyonight" || currentTheme == "darkmonokai"
+                   || currentTheme == "darksolarized" || currentTheme == "classicdark");
+
+    if (isDark && availableThemes.contains("breeze-dark"))
+        return QStringLiteral("breeze-dark");
+    if (!isDark && availableThemes.contains("breeze"))
+        return QStringLiteral("breeze");
+    if (availableThemes.contains(systemIconTheme))
+        return systemIconTheme;
+
+    return availableThemes.first();
+}
+
+}  // namespace
+
 void QtUi::refreshIconTheme()
 {
     // List of available fallback themes
@@ -307,16 +332,7 @@ void QtUi::refreshIconTheme()
     }
 
     UiStyleSettings s;
-    QString fallbackTheme{s.value("Icons/FallbackTheme").toString()};
-
-    if (fallbackTheme.isEmpty() || !availableThemes.contains(fallbackTheme)) {
-        if (availableThemes.contains(_systemIconTheme)) {
-            fallbackTheme = _systemIconTheme;
-        }
-        else {
-            fallbackTheme = availableThemes.first();
-        }
-    }
+    QString fallbackTheme = determineFallbackTheme(availableThemes, _systemIconTheme);
 
     if (_systemIconTheme.isEmpty() || _systemIconTheme == fallbackTheme || s.value("Icons/OverrideSystemTheme", true).toBool()) {
         // We have a valid fallback theme and want to override the system theme (if it's even defined), so we're basically done

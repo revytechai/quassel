@@ -24,6 +24,7 @@
 #include <utility>
 
 #include <QApplication>
+#include <QGuiApplication>
 #include <QRegularExpression>
 
 namespace {
@@ -40,7 +41,12 @@ bool exactMatch(const QRegularExpression& rx, const QString& text, QRegularExpre
 
 QssParser::QssParser()
 {
-    _palette = QApplication::palette();
+    if (qobject_cast<QGuiApplication*>(QCoreApplication::instance())) {
+        _palette = QApplication::palette();
+    }
+    else {
+        _palette = QPalette();
+    }
 
     // Init palette color roles
     _paletteColorRoles["alternate-base"] = QPalette::AlternateBase;
