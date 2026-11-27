@@ -43,7 +43,7 @@ public:
         ChannelTab = 0x02
     };
 
-    explicit TabCompleter(MultiLineEdit* inputLine_);
+    explicit TabCompleter(MultiLineEdit* inputLine_, BufferId bufferId = BufferId());
 
     void reset();
     void complete();
@@ -62,6 +62,7 @@ private:
     };
 
     QPointer<MultiLineEdit> _lineEdit;
+    BufferId _explicitBufferId;
     bool _enabled;
     QString _nickSuffix;
 

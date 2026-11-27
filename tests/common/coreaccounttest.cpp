@@ -314,3 +314,20 @@ TEST(CoreAccountTest, flatpakMigration)
     // Clean up
     settings.clearAccounts();
 }
+
+TEST(CoreAccountTest, debugStreamRedactsPasswords)
+{
+    CoreAccount acc(AccountId(1));
+    acc.setAccountName("TestAccount");
+    acc.setUser("alice");
+    acc.setPassword("supersecretpassword123");
+    acc.setProxyPassword("proxysecret456");
+
+    QString str;
+    QDebug dbg(&str);
+    dbg << acc;
+
+    EXPECT_FALSE(str.contains("supersecretpassword123"));
+    EXPECT_FALSE(str.contains("proxysecret456"));
+    EXPECT_TRUE(str.contains("<redacted>"));
+}

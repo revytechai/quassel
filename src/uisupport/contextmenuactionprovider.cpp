@@ -44,6 +44,7 @@ ContextMenuActionProvider::ContextMenuActionProvider(QObject* parent)
     registerAction(BufferPart, icon::get("irc-close-channel"), tr("Part"));
     registerAction(BufferRemove, tr("Delete Chat(s)..."));
     registerAction(BufferSwitchTo, tr("Go to Chat"));
+    registerAction(BufferPopOut, icon::get({"view-fullscreen", "window-new"}), tr("Pop Out to Separate Window"));
 
     registerAction(HideJoinPartQuit, tr("Joins/Parts/Quits"));
     registerAction(HideJoin, tr("Joins"), true);
@@ -257,6 +258,7 @@ void ContextMenuActionProvider::addActions(QMenu* menu,
                     setIndexList(targetIdx);
                     addAction(BufferJoin, menu, targetIdx, InactiveState);
                     addAction(BufferSwitchTo, menu, targetIdx, ActiveState);
+                    addAction(BufferPopOut, menu, targetIdx);
                 }
                 else
                     addAction(JoinChannel, menu);
@@ -297,6 +299,7 @@ void ContextMenuActionProvider::addBufferItemActions(QMenu* menu, const QModelIn
     case BufferInfo::ChannelBuffer:
         addAction(BufferJoin, menu, index, InactiveState);
         addAction(BufferPart, menu, index, ActiveState);
+        addAction(BufferPopOut, menu, index);
         menu->addSeparator();
         addHideEventsMenu(menu, bufferInfo.bufferId());
         menu->addSeparator();
@@ -311,6 +314,8 @@ void ContextMenuActionProvider::addBufferItemActions(QMenu* menu, const QModelIn
         addIrcUserActions(menu, index);
         menu->addSeparator();
         //}
+        addAction(BufferPopOut, menu, index);
+        menu->addSeparator();
         addHideEventsMenu(menu, bufferInfo.bufferId());
         menu->addSeparator();
         addAction(HideBufferTemporarily, menu, isCustomBufferView);

@@ -46,6 +46,7 @@ target_sources(${TARGET} PRIVATE
     settingspagedlg.cpp
     simplenetworkeditor.cpp
     sslinfodlg.cpp
+    standalonebufferwindow.cpp
     systemtray.cpp
     systrayanimationnotificationbackend.cpp
     systraynotificationbackend.cpp

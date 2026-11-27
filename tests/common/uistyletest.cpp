@@ -27,6 +27,9 @@
 #include <QString>
 #include <QTextStream>
 
+#include "buffermodel.h"
+#include "client.h"
+#include "contextmenuactionprovider.h"
 #include "graphicalui.h"
 #include "integrationtestsupport.h"
 #include "qssparser.h"
@@ -333,4 +336,55 @@ TEST(UiStyleTest, darkQssHasSolidDropdownAndMenuRules)
             EXPECT_FALSE(block.contains("padding:"));
         }
     }
+}
+
+TEST(UiStyleTest, styleStringTruncatedFormatSafety)
+{
+    // Test that malformed truncated formatting codes do not cause out-of-bounds crashes
+    const QStringList malformedInputs = {
+        "%",
+        "%D",
+        "%Dc",
+        "%Dcf",
+        "%Dcf1",
+        "%Dh",
+        "%Dh#",
+        "%Dh#12345",
+        "Hello %",
+        "Trailing %D",
+        "Truncated %Dc"
+    };
+
+    for (const auto& input : malformedInputs) {
+        EXPECT_NO_THROW({
+            UiStyle::StyledString result = UiStyle::styleString(input, UiStyle::FormatType::PlainMsg);
+            Q_UNUSED(result);
+        });
+    }
+}
+
+TEST(UiStyleTest, bufferPopOutActionAndModel)
+{
+    EXPECT_EQ(NetworkModelController::BufferPopOut, 0x50);
+    ContextMenuActionProvider provider;
+    Action* act = provider.action(NetworkModelController::BufferPopOut);
+    ASSERT_NE(act, nullptr);
+    EXPECT_TRUE(act->text().contains("Pop Out"));
+
+    test::QuasselTestSupport::ensureInitialized(Quassel::ClientOnly);
+    auto* client = new Client(test::QuasselTestSupport::createTestUi());
+
+    BufferModel model;
+    bool signalEmitted = false;
+    BufferId targetId(42);
+
+    QObject::connect(&model, &BufferModel::bufferPopOutRequested, [&signalEmitted, targetId](const BufferId& id) {
+        if (id == targetId)
+            signalEmitted = true;
+    });
+
+    model.popOutBuffer(targetId);
+    EXPECT_TRUE(signalEmitted);
+
+    delete client;
 }

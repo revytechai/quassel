@@ -271,3 +271,18 @@ TEST(IrcEncoderTest, tags_with_long_strange_values)
                          "",
                          "COMMAND")).data());
 }
+
+TEST(IrcEncoderTest, stripsLineBreaksAndNullsFromCommandAndParams)
+{
+    // Ensure CRLF and null characters in prefix, command, and params are stripped to prevent line injection
+    std::string prefix = "nick!user@host\r\n";
+    std::string cmd = "PRIV\rMSG\n";
+    std::vector<std::string> params{"#channel\r\n", std::string("hello world\0extra\r\n", 19)};
+
+    std::string encoded = write(IrcMessage(prefix, cmd, params));
+
+    EXPECT_EQ(encoded.find('\r'), std::string::npos);
+    EXPECT_EQ(encoded.find('\n'), std::string::npos);
+    EXPECT_EQ(encoded.find('\0'), std::string::npos);
+    EXPECT_EQ(encoded, ":nick!user@host PRIVMSG #channel :hello worldextra");
+}

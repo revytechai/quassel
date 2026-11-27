@@ -93,6 +93,7 @@
 #include "settingsdlg.h"
 #include "settingspagedlg.h"
 #include "sslinfodlg.h"
+#include "standalonebufferwindow.h"
 #include "statusnotifieritem.h"
 #include "toolbaractionprovider.h"
 #include "topicwidget.h"
@@ -367,6 +368,14 @@ void MainWin::setupActions()
     // View
     coll->addAction("ConfigureBufferViews", new Action(tr("&Configure Chat Lists..."), coll, this, &MainWin::onConfigureViewsTriggered));
 
+    coll->addAction("PopOutCurrentBuffer",
+                    new Action(icon::get({"view-fullscreen", "window-new"}),
+                               tr("&Pop Out Current Chat to New Window"),
+                               coll,
+                               this,
+                               &MainWin::popOutCurrentBuffer,
+                               Qt::CTRL | Qt::ALT | Qt::Key_W));
+
     coll->addAction("ToggleSearchBar", new Action(icon::get("edit-find"), tr("Show &Search Bar"), coll, QKeySequence::Find))->setCheckable(true);
     coll->addAction("ShowAwayLog", new Action(tr("Show Away Log"), coll, this, &MainWin::showAwayLog));
     coll->addAction("ToggleMenuBar", new Action(icon::get("show-menu"), tr("Show &Menubar"), coll))->setCheckable(true);
@@ -633,6 +642,7 @@ void MainWin::setupMenus()
     _viewMenu->addAction(coll->action("ToggleMenuBar"));
     _viewMenu->addAction(coll->action("ToggleStatusBar"));
     _viewMenu->addAction(coll->action("ToggleSearchBar"));
+    _viewMenu->addAction(coll->action("PopOutCurrentBuffer"));
 
     coreAction = coll->action("ShowAwayLog");
     flagRemoteCoreOnly(coreAction);
@@ -695,7 +705,27 @@ void MainWin::setupBufferWidget()
     _bufferWidget = new BufferWidget(this);
     _bufferWidget->setModel(Client::bufferModel());
     _bufferWidget->setSelectionModel(Client::bufferModel()->standardSelectionModel());
+    connect(Client::bufferModel(), &BufferModel::bufferPopOutRequested, this, &MainWin::popOutBuffer);
     setCentralWidget(_bufferWidget);
+}
+
+void MainWin::popOutCurrentBuffer()
+{
+    BufferId currentId = Client::bufferModel()->currentBuffer();
+    if (currentId.isValid()) {
+        popOutBuffer(currentId);
+    }
+}
+
+void MainWin::popOutBuffer(const BufferId& bufferId)
+{
+    if (!bufferId.isValid())
+        return;
+
+    auto* window = new StandaloneBufferWindow(bufferId, nullptr);
+    window->show();
+    window->raise();
+    window->activateWindow();
 }
 
 void MainWin::addBufferView(int bufferViewConfigId)

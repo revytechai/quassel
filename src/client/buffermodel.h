@@ -54,9 +54,13 @@ public:
     inline QModelIndex currentIndex() { return standardSelectionModel()->currentIndex(); }
     inline BufferId currentBuffer() { return currentIndex().data(NetworkModel::BufferIdRole).value<BufferId>(); }
 
+signals:
+    void bufferPopOutRequested(const BufferId& bufferId);
+
 public slots:
     void setCurrentIndex(const QModelIndex& newCurrent);
     void switchToBuffer(const BufferId& bufferId);
+    void popOutBuffer(const BufferId& bufferId);
     void switchToBufferIndex(const QModelIndex& bufferIdx);
     void switchToOrJoinBuffer(NetworkId network, const QString& bufferName, bool isQuery = false);
     void switchToOrStartQuery(NetworkId network, const QString& nick) { switchToOrJoinBuffer(network, nick, true); }

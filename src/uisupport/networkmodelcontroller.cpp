@@ -290,6 +290,9 @@ void NetworkModelController::handleBufferAction(ActionType type, QAction*)
             case BufferSwitchTo:
                 Client::bufferModel()->switchToBuffer(bufferInfo.bufferId());
                 break;
+            case BufferPopOut:
+                Client::bufferModel()->popOutBuffer(bufferInfo.bufferId());
+                break;
             default:
                 break;
             }

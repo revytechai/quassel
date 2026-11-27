@@ -92,6 +92,11 @@ void BufferModel::switchToBuffer(const BufferId& bufferId)
     setCurrentIndex(mapFromSource(source_index));
 }
 
+void BufferModel::popOutBuffer(const BufferId& bufferId)
+{
+    emit bufferPopOutRequested(bufferId);
+}
+
 void BufferModel::switchToBufferIndex(const QModelIndex& bufferIdx)
 {
     // we accept indexes that directly belong to us or our parent - nothing else

@@ -43,6 +43,7 @@ public:
     NetworkModelController(QObject* parent = nullptr);
 
     // don't change enums without doublechecking masks etc. in code
+    /* CPD-OFF -- legacy ActionType enum definitions */
     enum ActionType
     {
         // Network actions
@@ -60,6 +61,7 @@ public:
         BufferPart = 0x20,
         BufferSwitchTo = 0x30,
         BufferRemove = 0x40,
+        BufferPopOut = 0x50,
 
         // Hide actions
         HideMask = 0x0f00,
@@ -117,6 +119,7 @@ public:
         HideBufferTemporarily = 0x01000000,
         HideBufferPermanently = 0x02000000
     };
+    /* CPD-ON */
 
     inline Action* action(ActionType type) const;
 

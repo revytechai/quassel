@@ -76,13 +76,17 @@ void IrcEncoder::writeTags(QByteArray& msg, const QHash<IrcTagKey, QString>& tag
 void IrcEncoder::writePrefix(QByteArray& msg, const QByteArray& prefix)
 {
     if (!prefix.isEmpty()) {
-        msg += ":" + prefix + " ";
+        QByteArray cleanPrefix = prefix;
+        cleanPrefix.replace('\r', "").replace('\n', "").replace('\0', "");
+        msg += ":" + cleanPrefix + " ";
     }
 }
 
 void IrcEncoder::writeCommand(QByteArray& msg, const QString& cmd)
 {
-    msg += cmd.toUpper().toLatin1();
+    QByteArray cleanCmd = cmd.trimmed().toUpper().toLatin1();
+    cleanCmd.replace('\r', "").replace('\n', "").replace('\0', "");
+    msg += cleanCmd;
 }
 
 void IrcEncoder::writeParams(QByteArray& msg, const QList<QByteArray>& params)
@@ -90,10 +94,13 @@ void IrcEncoder::writeParams(QByteArray& msg, const QList<QByteArray>& params)
     for (int i = 0; i < params.size(); i++) {
         msg += " ";
 
+        QByteArray cleanParam = params[i];
+        cleanParam.replace('\r', "").replace('\n', "").replace('\0', "");
+
         bool isLastParam = i == params.size() - 1;
-        if (isLastParam && (params[i].isEmpty() || params[i].contains(' ') || params[i][0] == ':'))
+        if (isLastParam && (cleanParam.isEmpty() || cleanParam.contains(' ') || cleanParam[0] == ':'))
             msg += ":";
 
-        msg += params[i];
+        msg += cleanParam;
     }
 }

@@ -39,9 +39,10 @@ BufferId TabCompleter::_currentBufferId;
 QString TabCompleter::_currentBufferName;
 TabCompleter::Type TabCompleter::_completionType;
 
-TabCompleter::TabCompleter(MultiLineEdit* _lineEdit)
+TabCompleter::TabCompleter(MultiLineEdit* _lineEdit, BufferId bufferId)
     : QObject(_lineEdit)
     , _lineEdit(_lineEdit)
+    , _explicitBufferId(bufferId)
     , _enabled(false)
     , _nickSuffix(": ")
 {
@@ -66,7 +67,13 @@ void TabCompleter::buildCompletionList()
     _nextCompletion = _completionMap.begin();
 
     // this is the first time tab is pressed -> build up the completion list and it's iterator
-    QModelIndex currentIndex = Client::bufferModel()->currentIndex();
+    QModelIndex currentIndex;
+    if (_explicitBufferId.isValid()) {
+        currentIndex = Client::networkModel()->bufferIndex(_explicitBufferId);
+    }
+    else {
+        currentIndex = Client::bufferModel()->currentIndex();
+    }
     _currentBufferId = currentIndex.data(NetworkModel::BufferIdRole).value<BufferId>();
     if (!_currentBufferId.isValid())
         return;

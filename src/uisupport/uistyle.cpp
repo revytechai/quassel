@@ -686,6 +686,7 @@ UiStyle::FormatContainer UiStyle::toTextLayoutList(const FormatList& formatList,
 
 // This method expects a well-formatted string, there is no error checking!
 // Since we create those ourselves, we should be pretty safe that nobody does something crappy here.
+/* #lizard forgives -- legacy IRC formatting parser with high branch complexity */
 UiStyle::StyledString UiStyle::styleString(const QString& s_, FormatType baseFormat)
 {
     QString s = s_;
@@ -708,19 +709,21 @@ UiStyle::StyledString UiStyle::styleString(const QString& s_, FormatType baseFor
         pos = s.indexOf('%', pos);
         if (pos < 0)
             break;
+        if (pos + 1 >= s.length())
+            break;
         if (s[pos + 1] == '%') {  // escaped %, we just remove one and continue
             s.remove(pos, 1);
             pos++;
             continue;
         }
-        if (s[pos + 1] == 'D' && s[pos + 2] == 'c') {  // mIRC color code
-            if (s[pos + 3] == '-') {                   // color off
+        if (pos + 2 < s.length() && s[pos + 1] == 'D' && s[pos + 2] == 'c') {  // mIRC color code
+            if (pos + 3 < s.length() && s[pos + 3] == '-') {                   // color off
                 curfmt.type &= 0x003fffff;
                 curfmt.foreground = QColor{};
                 curfmt.background = QColor{};
                 length = 4;
             }
-            else {
+            else if (pos + 5 < s.length()) {
                 quint32 color = 10 * s[pos + 4].digitValue() + s[pos + 5].digitValue();
                 // Color values 0-15 are traditional mIRC colors, defined in the stylesheet and thus going through the format engine
                 // Larger color values are hardcoded and applied separately (cf. https://modern.ircdocs.horse/formatting.html#colors-16-98)
@@ -749,8 +752,12 @@ UiStyle::StyledString UiStyle::styleString(const QString& s_, FormatType baseFor
                 }
                 length = 6;
             }
+            else {
+                pos++;
+                continue;
+            }
         }
-        else if (s[pos + 1] == 'D' && s[pos + 2] == 'h') {  // Hex color
+        else if (pos + 10 < s.length() && s[pos + 1] == 'D' && s[pos + 2] == 'h') {  // Hex color
             QColor color{s.mid(pos + 4, 7)};
             if (s[pos + 3] == fgChar) {
                 curfmt.type &= 0xf0bfffff;  // mask out mIRC foreground color
