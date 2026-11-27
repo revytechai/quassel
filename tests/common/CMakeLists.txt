@@ -18,6 +18,7 @@ quassel_add_test(UiSupportRegexTest
 
 quassel_add_test(UiStyleTest
     LIBRARIES
+        Quassel::QtUi
         Quassel::UiSupport
         Quassel::Test::Util
 )

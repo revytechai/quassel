@@ -18,8 +18,11 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.         *
  ***************************************************************************/
 
+#include <QAbstractItemView>
 #include <QColor>
+#include <QComboBox>
 #include <QFile>
+#include <QMenu>
 #include <QPalette>
 #include <QString>
 #include <QTextStream>
@@ -27,6 +30,7 @@
 #include "graphicalui.h"
 #include "integrationtestsupport.h"
 #include "qssparser.h"
+#include "qtui.h"
 #include "quassel.h"
 #include "testglobal.h"
 #include "uisettings.h"
@@ -267,4 +271,66 @@ TEST(UiStyleTest, iconResolutionWithFallback)
     EXPECT_FALSE(icon::get("irc-voice").isNull());
     EXPECT_FALSE(icon::get({"im-user-offline", "user-offline"}).isNull());
     EXPECT_FALSE(icon::get({"im-user-online", "im-user", "user-available"}).isNull());
+}
+
+TEST(UiStyleTest, enforceSolidBackgroundClearsTranslucency)
+{
+    test::QuasselTestSupport::ensureInitialized(Quassel::ClientOnly);
+
+    // Test QMenu solid background enforcement
+    QMenu menu;
+    menu.setAttribute(Qt::WA_TranslucentBackground, true);
+    menu.setAutoFillBackground(false);
+    QtUi::enforceSolidBackground(&menu);
+    EXPECT_FALSE(menu.testAttribute(Qt::WA_TranslucentBackground));
+    EXPECT_TRUE(menu.autoFillBackground());
+
+    // Test QComboBox and its popup views
+    QComboBox cb;
+    cb.addItem("Item 1");
+    cb.addItem("Item 2");
+    if (cb.view()) {
+        cb.view()->setAttribute(Qt::WA_TranslucentBackground, true);
+        cb.view()->setAutoFillBackground(false);
+        if (cb.view()->parentWidget()) {
+            cb.view()->parentWidget()->setAttribute(Qt::WA_TranslucentBackground, true);
+            cb.view()->parentWidget()->setAutoFillBackground(false);
+        }
+    }
+    QtUi::enforceSolidBackground(&cb);
+    if (cb.view()) {
+        EXPECT_FALSE(cb.view()->testAttribute(Qt::WA_TranslucentBackground));
+        EXPECT_TRUE(cb.view()->autoFillBackground());
+        if (cb.view()->viewport()) {
+            EXPECT_FALSE(cb.view()->viewport()->testAttribute(Qt::WA_TranslucentBackground));
+            EXPECT_TRUE(cb.view()->viewport()->autoFillBackground());
+        }
+        if (cb.view()->parentWidget()) {
+            EXPECT_FALSE(cb.view()->parentWidget()->testAttribute(Qt::WA_TranslucentBackground));
+            EXPECT_TRUE(cb.view()->parentWidget()->autoFillBackground());
+        }
+    }
+}
+
+TEST(UiStyleTest, darkQssHasSolidDropdownAndMenuRules)
+{
+    QString darkQssPath = Quassel::findDataFilePath(QStringLiteral("stylesheets/dark.qss"));
+    if (darkQssPath.isEmpty()) {
+        darkQssPath = QStringLiteral(":/data/stylesheets/dark.qss");
+    }
+
+    QFile file(darkQssPath);
+    if (file.open(QFile::ReadOnly)) {
+        QString content = QString::fromUtf8(file.readAll());
+        EXPECT_TRUE(content.contains("QComboBox QAbstractItemView"));
+        EXPECT_TRUE(content.contains("background: #1e1e2e") || content.contains("background-color: #1e1e2e"));
+        // Ensure no border or padding is set directly on QComboBox QAbstractItemView which triggers Qt transparency bug
+        int pos = content.indexOf("QComboBox QAbstractItemView {");
+        if (pos != -1) {
+            int end = content.indexOf("}", pos);
+            QString block = content.mid(pos, end - pos);
+            EXPECT_FALSE(block.contains("border:"));
+            EXPECT_FALSE(block.contains("padding:"));
+        }
+    }
 }

@@ -22,7 +22,10 @@
 
 #include <memory>
 
+#include <QAbstractItemView>
+#include <QAbstractScrollArea>
 #include <QApplication>
+#include <QComboBox>
 #include <QFile>
 #include <QFileInfo>
 #include <QIcon>
@@ -88,6 +91,8 @@ void QtUi::init()
 
     QtUiSettings uiSettings;
     uiSettings.initAndNotify("UseSystemTrayIcon", this, &QtUi::useSystemTrayChanged, true);
+
+    QApplication::instance()->installEventFilter(this);
 
     GraphicalUi::init();  // needs to be called after the mainWin is initialized
 }
@@ -347,6 +352,47 @@ QString determineBundledFallback(const QStringList& availableThemes)
 }
 
 }  // namespace
+
+void QtUi::enforceSolidBackground(QObject* watched)
+{
+    auto* widget = qobject_cast<QWidget*>(watched);
+    if (!widget)
+        return;
+
+    const bool isPopup = widget->inherits("QComboBoxPrivateContainer") || widget->inherits("QMenu") || widget->inherits("QAbstractItemView");
+    if (isPopup) {
+        widget->setAttribute(Qt::WA_TranslucentBackground, false);
+        widget->setAutoFillBackground(true);
+        if (auto* scrollArea = qobject_cast<QAbstractScrollArea*>(widget)) {
+            if (scrollArea->viewport()) {
+                scrollArea->viewport()->setAttribute(Qt::WA_TranslucentBackground, false);
+                scrollArea->viewport()->setAutoFillBackground(true);
+            }
+        }
+    }
+    else if (auto* cb = qobject_cast<QComboBox*>(widget)) {
+        if (cb->view()) {
+            cb->view()->setAttribute(Qt::WA_TranslucentBackground, false);
+            cb->view()->setAutoFillBackground(true);
+            if (cb->view()->viewport()) {
+                cb->view()->viewport()->setAttribute(Qt::WA_TranslucentBackground, false);
+                cb->view()->viewport()->setAutoFillBackground(true);
+            }
+            if (cb->view()->parentWidget()) {
+                cb->view()->parentWidget()->setAttribute(Qt::WA_TranslucentBackground, false);
+                cb->view()->parentWidget()->setAutoFillBackground(true);
+            }
+        }
+    }
+}
+
+bool QtUi::eventFilter(QObject* watched, QEvent* event)
+{
+    if (event->type() == QEvent::Show || event->type() == QEvent::Polish) {
+        enforceSolidBackground(watched);
+    }
+    return GraphicalUi::eventFilter(watched, event);
+}
 
 void QtUi::refreshIconTheme()
 {

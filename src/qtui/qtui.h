@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "qtui-export.h"
+
 #include <memory>
 #include <tuple>
 #include <vector>
@@ -41,7 +43,7 @@ class QtUiMessageProcessor;
 /** This is basically a wrapper around MainWin, which is necessary because we cannot derive MainWin
  *  from both QMainWindow and AbstractUi (because of multiple inheritance of QObject).
  */
-class QtUi : public GraphicalUi
+class QTUI_EXPORT QtUi : public GraphicalUi
 {
     Q_OBJECT
 
@@ -55,6 +57,8 @@ public:
     static QtUi* instance();
     inline static QtUiStyle* style();
     inline static MainWin* mainWindow();
+
+    static void enforceSolidBackground(QObject* watched);
 
     QString debugLog() const;
 
@@ -115,6 +119,7 @@ protected slots:
 protected:
     void minimizeRestore(bool show) override;
     bool isHidingMainWidgetAllowed() const override;
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
 private slots:
     void useSystemTrayChanged(const QVariant&);
