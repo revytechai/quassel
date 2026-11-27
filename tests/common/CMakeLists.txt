@@ -39,3 +39,16 @@ quassel_add_test(ToolBarActionProviderTest
 quassel_add_test(TypesTest)
 
 quassel_add_test(UtilTest)
+
+quassel_add_test(BufferModelTest
+    LIBRARIES
+        Quassel::Client
+        Quassel::Test::Util
+)
+
+quassel_add_test(TabCompleterTest
+    LIBRARIES
+        Quassel::UiSupport
+        Quassel::Client
+        Quassel::Test::Util
+)

@@ -706,6 +706,13 @@ void MainWin::setupBufferWidget()
     _bufferWidget->setModel(Client::bufferModel());
     _bufferWidget->setSelectionModel(Client::bufferModel()->standardSelectionModel());
     connect(Client::bufferModel(), &BufferModel::bufferPopOutRequested, this, &MainWin::popOutBuffer);
+    connect(Client::bufferModel(), &BufferModel::bufferPoppedOutChanged, this, [this](const BufferId&, bool) {
+        BufferId currentId = Client::bufferModel()->currentBuffer();
+        ActionCollection* coll = QtUi::actionCollection("General");
+        if (coll && coll->action("PopOutCurrentBuffer")) {
+            coll->action("PopOutCurrentBuffer")->setEnabled(currentId.isValid() && !hasStandaloneWindow(currentId));
+        }
+    });
     setCentralWidget(_bufferWidget);
 }
 
@@ -722,10 +729,38 @@ void MainWin::popOutBuffer(const BufferId& bufferId)
     if (!bufferId.isValid())
         return;
 
+    if (_openStandaloneWindows.contains(bufferId) && !_openStandaloneWindows[bufferId].isNull()) {
+        auto* existing = _openStandaloneWindows[bufferId].data();
+        existing->show();
+        existing->raise();
+        existing->activateWindow();
+        return;
+    }
+
     auto* window = new StandaloneBufferWindow(bufferId, nullptr);
+    _openStandaloneWindows[bufferId] = window;
+    if (Client::bufferModel()) {
+        Client::bufferModel()->setBufferPoppedOut(bufferId, true);
+    }
+    connect(window, &QObject::destroyed, this, [this, bufferId]() {
+        _openStandaloneWindows.remove(bufferId);
+        if (Client::bufferModel()) {
+            Client::bufferModel()->setBufferPoppedOut(bufferId, false);
+        }
+    });
     window->show();
     window->raise();
     window->activateWindow();
+}
+
+bool MainWin::hasStandaloneWindow(const BufferId& bufferId) const
+{
+    return _openStandaloneWindows.contains(bufferId) && !_openStandaloneWindows[bufferId].isNull();
+}
+
+StandaloneBufferWindow* MainWin::standaloneWindow(const BufferId& bufferId) const
+{
+    return _openStandaloneWindows.value(bufferId, nullptr);
 }
 
 void MainWin::addBufferView(int bufferViewConfigId)
@@ -1385,6 +1420,17 @@ void MainWin::disconnectedFromCore()
         Client::bufferModel()->standardSelectionModel()->clearSelection();
     }
     restoreState(s.value("MainWinState").toByteArray());
+
+    for (auto it = _openStandaloneWindows.begin(); it != _openStandaloneWindows.end(); ++it) {
+        if (!it.value().isNull()) {
+            it.value()->deleteLater();
+        }
+        if (Client::bufferModel()) {
+            Client::bufferModel()->setBufferPoppedOut(it.key(), false);
+        }
+    }
+    _openStandaloneWindows.clear();
+
     setDisconnectedState();
 }
 
@@ -1777,6 +1823,11 @@ void MainWin::currentBufferChanged(BufferId buffer)
 {
     if (buffer.isValid())
         Client::instance()->markBufferAsRead(buffer);
+
+    ActionCollection* coll = QtUi::actionCollection("General");
+    if (coll && coll->action("PopOutCurrentBuffer")) {
+        coll->action("PopOutCurrentBuffer")->setEnabled(buffer.isValid() && !hasStandaloneWindow(buffer));
+    }
 }
 
 void MainWin::clientNetworkCreated(NetworkId id)

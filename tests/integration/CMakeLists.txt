@@ -3,3 +3,4 @@ quassel_add_test(HeadlessSyncTest LIBRARIES Quassel::Client Quassel::Core Quasse
 quassel_add_test(ChannelSyncTest LIBRARIES Quassel::Client Quassel::UiSupport Quassel::Core Quassel::Test::Util)
 quassel_add_test(MonolithicLifecycleTest LIBRARIES Quassel::Client Quassel::Core Quassel::Test::Util)
 quassel_add_test(PostgreSqlStorageTest LIBRARIES Quassel::Core Quassel::Test::Util)
+quassel_add_test(StandaloneBufferWindowTest LIBRARIES Quassel::QtUi Quassel::UiSupport Quassel::Client Quassel::Core Quassel::Test::Util)

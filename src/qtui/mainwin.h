@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include <QPointer>
 #include <QUuid>
 
 #ifdef HAVE_KF6
@@ -47,6 +48,7 @@ class MsgProcessorStatusWidget;
 class NickListWidget;
 class SystemTray;
 class TopicWidget;
+class StandaloneBufferWindow;
 
 class QLabel;
 class QMenu;
@@ -56,7 +58,7 @@ class QToolBar;
 class KHelpMenu;
 
 //!\brief The main window of Quassel's QtUi.
-class MainWin
+class QTUI_EXPORT MainWin
 #ifdef HAVE_KDE
     : public KMainWindow
 {
@@ -94,6 +96,8 @@ public slots:
     void hideCurrentBuffer();
     void popOutBuffer(const BufferId& bufferId);
     void popOutCurrentBuffer();
+    bool hasStandaloneWindow(const BufferId& bufferId) const;
+    StandaloneBufferWindow* standaloneWindow(const BufferId& bufferId) const;
     void nextBufferView();      //!< Activate the next bufferview
     void previousBufferView();  //!< Activate the previous bufferview
     void nextBuffer();
@@ -293,6 +297,7 @@ private:
     BufferHotListFilter* _bufferHotList;
     QHash<int, BufferId> _jumpKeyMap;
     int _activeBufferViewIndex{-1};
+    QHash<BufferId, QPointer<StandaloneBufferWindow>> _openStandaloneWindows;
 
     bool _aboutToQuit{false};  // closeEvent can occur multiple times on OSX
 

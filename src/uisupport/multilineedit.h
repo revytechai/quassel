@@ -60,6 +60,12 @@ public:
     inline QString text() const { return toPlainText(); }
     inline QString html() const { return toHtml(); }
     inline int cursorPosition() const { return textCursor().position(); }
+    inline void setCursorPosition(int pos)
+    {
+        QTextCursor cursor = textCursor();
+        cursor.setPosition(pos);
+        setTextCursor(cursor);
+    }
     inline void insert(const QString& newText) { insertPlainText(newText); }
     inline void backspace() { keyPressEvent(new QKeyEvent(QEvent::KeyPress, Qt::Key_Backspace, Qt::NoModifier)); }
     inline bool hasSelectedText() const { return textCursor().hasSelection(); }

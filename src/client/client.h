@@ -112,6 +112,7 @@ public:
     static void createNetwork(const NetworkInfo& info, const QStringList& persistentChannels = QStringList());
     static void updateNetwork(const NetworkInfo& info);
     static void removeNetwork(NetworkId id);
+    static void addNetwork(Network*);
 
     static inline NetworkModel* networkModel() { return instance()->_networkModel; }
     static inline BufferModel* bufferModel() { return instance()->_bufferModel; }
@@ -306,7 +307,6 @@ private:
      */
     void requestLegacyCoreInfo();
 
-    static void addNetwork(Network*);
 
     SignalProxy* _signalProxy{nullptr};
     std::unique_ptr<AbstractUi> _mainUi;

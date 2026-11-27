@@ -33,6 +33,9 @@ class ChatView;
 class MultiLineEdit;
 class TabCompleter;
 class QPushButton;
+class NickView;
+class NickViewFilter;
+class QSplitter;
 
 class QTUI_EXPORT StandaloneBufferWindow : public QMainWindow
 {
@@ -44,12 +47,20 @@ public:
 
     BufferId bufferId() const { return _bufferId; }
     BufferInfo bufferInfo() const { return _bufferInfo; }
+    MultiLineEdit* inputEdit() const { return _inputEdit; }
+    QLabel* topicLabel() const { return _topicLabel; }
+    ChatView* chatView() const { return _chatView; }
+    QPushButton* sendButton() const { return _sendButton; }
+    QPushButton* toggleUsersButton() const { return _toggleUsersButton; }
+    NickView* nickView() const { return _nickView; }
+
+    bool areUsersVisible() const;
 
 public slots:
     void updateTitleAndTopic();
-
-private slots:
     void sendInput(const QString& text);
+    void setUsersVisible(bool visible);
+    void toggleUsers();
 
 protected:
     void closeEvent(QCloseEvent* event) override;
@@ -58,7 +69,11 @@ private:
     BufferId _bufferId;
     BufferInfo _bufferInfo;
     ChatView* _chatView{nullptr};
+    NickView* _nickView{nullptr};
+    NickViewFilter* _nickViewFilter{nullptr};
+    QSplitter* _splitter{nullptr};
     QLabel* _topicLabel{nullptr};
+    QPushButton* _toggleUsersButton{nullptr};
     MultiLineEdit* _inputEdit{nullptr};
     QPushButton* _sendButton{nullptr};
     TabCompleter* _tabCompleter{nullptr};

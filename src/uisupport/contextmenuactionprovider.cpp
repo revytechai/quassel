@@ -258,7 +258,9 @@ void ContextMenuActionProvider::addActions(QMenu* menu,
                     setIndexList(targetIdx);
                     addAction(BufferJoin, menu, targetIdx, InactiveState);
                     addAction(BufferSwitchTo, menu, targetIdx, ActiveState);
-                    addAction(BufferPopOut, menu, targetIdx);
+                    if (!Client::bufferModel() || !Client::bufferModel()->isBufferPoppedOut(bufId)) {
+                        addAction(BufferPopOut, menu, targetIdx);
+                    }
                 }
                 else
                     addAction(JoinChannel, menu);
@@ -299,7 +301,9 @@ void ContextMenuActionProvider::addBufferItemActions(QMenu* menu, const QModelIn
     case BufferInfo::ChannelBuffer:
         addAction(BufferJoin, menu, index, InactiveState);
         addAction(BufferPart, menu, index, ActiveState);
-        addAction(BufferPopOut, menu, index);
+        if (!Client::bufferModel() || !Client::bufferModel()->isBufferPoppedOut(bufferInfo.bufferId())) {
+            addAction(BufferPopOut, menu, index);
+        }
         menu->addSeparator();
         addHideEventsMenu(menu, bufferInfo.bufferId());
         menu->addSeparator();
@@ -314,7 +318,9 @@ void ContextMenuActionProvider::addBufferItemActions(QMenu* menu, const QModelIn
         addIrcUserActions(menu, index);
         menu->addSeparator();
         //}
-        addAction(BufferPopOut, menu, index);
+        if (!Client::bufferModel() || !Client::bufferModel()->isBufferPoppedOut(bufferInfo.bufferId())) {
+            addAction(BufferPopOut, menu, index);
+        }
         menu->addSeparator();
         addHideEventsMenu(menu, bufferInfo.bufferId());
         menu->addSeparator();

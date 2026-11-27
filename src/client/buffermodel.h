@@ -24,6 +24,7 @@
 
 #include <QItemSelectionModel>
 #include <QPair>
+#include <QSet>
 #include <QSortFilterProxyModel>
 
 #include "network.h"
@@ -54,8 +55,19 @@ public:
     inline QModelIndex currentIndex() { return standardSelectionModel()->currentIndex(); }
     inline BufferId currentBuffer() { return currentIndex().data(NetworkModel::BufferIdRole).value<BufferId>(); }
 
+    bool isBufferPoppedOut(const BufferId& bufferId) const { return _poppedOutBuffers.contains(bufferId); }
+    void setBufferPoppedOut(const BufferId& bufferId, bool poppedOut)
+    {
+        if (poppedOut)
+            _poppedOutBuffers.insert(bufferId);
+        else
+            _poppedOutBuffers.remove(bufferId);
+        emit bufferPoppedOutChanged(bufferId, poppedOut);
+    }
+
 signals:
     void bufferPopOutRequested(const BufferId& bufferId);
+    void bufferPoppedOutChanged(const BufferId& bufferId, bool isPoppedOut);
 
 public slots:
     void setCurrentIndex(const QModelIndex& newCurrent);
@@ -78,4 +90,5 @@ private:
 
     SelectionModelSynchronizer _selectionModelSynchronizer;
     QPair<NetworkId, QString> _bufferToSwitchTo;
+    QSet<BufferId> _poppedOutBuffers;
 };
